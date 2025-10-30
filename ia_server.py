@@ -4,6 +4,7 @@ from PIL import Image
 import base64
 import torch
 import numpy as np
+import requests
 from transformers import AutoImageProcessor, AutoModelForSemanticSegmentation
 from flask_cors import CORS
 
@@ -59,6 +60,37 @@ def segmentar():
     buffer.seek(0)
 
     return send_file(buffer, mimetype="image/png")
+
+# ------------------------------
+# ENDPOINT PARA PROCESAR IMAGEN POR URL
+# ------------------------------
+@app.route("/segmentar-url", methods=["POST"])
+def segmentar_url():
+    data = request.get_json()
+
+    if "url" not in data:
+        return jsonify({"error": "No se proporcionó una URL"}), 400
+
+    try:
+        # Descargar imagen desde la URL (evita problemas de CORS)
+        response = requests.get(data["url"], timeout=10)
+        response.raise_for_status()
+
+        # Convertir a PIL Image
+        image = Image.open(BytesIO(response.content))
+        result_img = segmentar_fondo_ojo(image)
+
+        # Convertir resultado a bytes y enviarlo directamente
+        buffer = BytesIO()
+        result_img.save(buffer, format="PNG")
+        buffer.seek(0)
+
+        return send_file(buffer, mimetype="image/png")
+
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": f"Error descargando imagen: {str(e)}"}), 400
+    except Exception as e:
+        return jsonify({"error": f"Error procesando imagen: {str(e)}"}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001)

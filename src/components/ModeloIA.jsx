@@ -2,12 +2,14 @@ import { useState } from "react";
 
 export default function ModeloIA({ imagenes }) {
   const [imagenOriginal, setImagenOriginal] = useState(null);
+  const [imagenOriginalURL, setImagenOriginalURL] = useState(null);
   const [imagenSegmentada, setImagenSegmentada] = useState(null);
   const [cargando, setCargando] = useState(false);
 
   // 🔹 Cuando el usuario selecciona una imagen del dispositivo
   const handleFileChange = (e) => {
     setImagenOriginal(e.target.files[0]);
+    setImagenOriginalURL(null);
     setImagenSegmentada(null);
   };
 
@@ -41,12 +43,28 @@ export default function ModeloIA({ imagenes }) {
   const procesarDesdeHistorial = async (urlFirebase) => {
     try {
       setCargando(true);
-      const response = await fetch(urlFirebase);
-      const blob = await response.blob();
-      await procesarImagen(blob);
+      setImagenSegmentada(null);
+      setImagenOriginal(null);
+      setImagenOriginalURL(urlFirebase);
+
+      // Enviar la URL al servidor para que él descargue y procese la imagen
+      const res = await fetch("http://192.168.40.45:5001/segmentar-url", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ url: urlFirebase }),
+      });
+
+      if (!res.ok) throw new Error("Error procesando la imagen");
+
+      const blob = await res.blob();
+      setImagenSegmentada(URL.createObjectURL(blob));
     } catch (error) {
       console.error("Error cargando imagen desde Firebase:", error);
       alert("Error al cargar imagen desde el historial");
+    } finally {
+      setCargando(false);
     }
   };
 
@@ -72,11 +90,11 @@ export default function ModeloIA({ imagenes }) {
       </div>
 
       {/* Mostrar imagen original */}
-      {imagenOriginal && (
+      {(imagenOriginal || imagenOriginalURL) && (
         <div>
           <p className="font-medium text-gray-600">Imagen seleccionada:</p>
           <img
-            src={URL.createObjectURL(imagenOriginal)}
+            src={imagenOriginal ? URL.createObjectURL(imagenOriginal) : imagenOriginalURL}
             alt="Original"
             className="w-64 rounded-lg shadow-md mt-2"
           />
