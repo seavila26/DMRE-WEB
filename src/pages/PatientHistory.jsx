@@ -8,6 +8,7 @@ import PatientProfile from "../components/PatientProfile";
 import EyeImagesGallery from "../components/EyeImagesGallery";
 import VisitList from "../components/VisitList";
 import NuevaVisita from "../components/NuevaVisita";
+import ModeloIA from "../components/ModeloIA";
 
 export default function PatientHistory() {
   const { id } = useParams();
@@ -92,11 +93,16 @@ setImagenesCombinadas({ derecho, izquierdo });
 
         {/* Tabs */}
         <div className="flex justify-center mb-8">
-          {["perfil", "imagenes", "visitas"].map((item) => (
-            <button key={item} onClick={() => setTab(item)}
+          {["perfil", "imagenes", "visitas", "modeloIA"].map((item) => (
+            <button
+              key={item}
+              onClick={() => setTab(item)}
               className={`px-6 py-2 mx-1 rounded-full font-medium transition-all
-                ${tab === item ? "bg-blue-600 text-white shadow" : "bg-white border border-gray-300 text-gray-600 hover:bg-gray-100"}`}>
-              {item.charAt(0).toUpperCase() + item.slice(1)}
+                ${tab === item ? "bg-blue-600 text-white shadow" : "bg-white border border-gray-300 text-gray-600 hover:bg-gray-100"}`}
+            >
+              {item === "modeloIA"
+                ? "Modelo IA"
+                : item.charAt(0).toUpperCase() + item.slice(1)}
             </button>
           ))}
         </div>
@@ -110,7 +116,14 @@ setImagenesCombinadas({ derecho, izquierdo });
           />
           )}
 
-          {tab === "Modelo IA"}
+          {tab === "modeloIA" && (
+          <ModeloIA
+          imagenes={[
+          ...imagenesCombinadas.derecho,
+          ...imagenesCombinadas.izquierdo
+          ]}
+          />
+          )}
 
 
           {tab === "imagenes" && <EyeImagesGallery imagenes={imagenesCombinadas} />}
