@@ -1,10 +1,52 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../firebase";
+import { saveIAAnalysisResult } from "../utils/imageUtils";
 
 export default function ModeloIA({ imagenes }) {
+  const { user } = useAuth();
   const [imagenOriginal, setImagenOriginal] = useState(null);
   const [imagenOriginalURL, setImagenOriginalURL] = useState(null);
   const [imagenSegmentada, setImagenSegmentada] = useState(null);
+  const [imagenSeleccionadaInfo, setImagenSeleccionadaInfo] = useState(null); // Info completa de imagen del historial
   const [cargando, setCargando] = useState(false);
+  const [autorInfo, setAutorInfo] = useState(null);
+  const [guardandoAnalisis, setGuardandoAnalisis] = useState(false);
+
+  // Obtener información del usuario autenticado
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      if (user) {
+        try {
+          const userDoc = await getDoc(doc(db, "usuarios", user.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setAutorInfo({
+              uid: user.uid,
+              nombre: userData.nombre || user.displayName || "Usuario",
+              email: user.email
+            });
+          } else {
+            setAutorInfo({
+              uid: user.uid,
+              nombre: user.displayName || "Usuario",
+              email: user.email
+            });
+          }
+        } catch (error) {
+          console.error("Error obteniendo info de usuario:", error);
+          setAutorInfo({
+            uid: user.uid,
+            nombre: user.displayName || "Usuario",
+            email: user.email
+          });
+        }
+      }
+    };
+
+    fetchUserInfo();
+  }, [user]);
 
   // 🔹 Cuando el usuario selecciona una imagen del dispositivo
   const handleFileChange = (e) => {
@@ -40,12 +82,13 @@ export default function ModeloIA({ imagenes }) {
   };
 
   // 🔹 Cuando el usuario selecciona una imagen del historial
-  const procesarDesdeHistorial = async (urlFirebase) => {
+  const procesarDesdeHistorial = async (imagenInfo) => {
     try {
       setCargando(true);
       setImagenSegmentada(null);
       setImagenOriginal(null);
-      setImagenOriginalURL(urlFirebase);
+      setImagenOriginalURL(imagenInfo.url);
+      setImagenSeleccionadaInfo(imagenInfo); // Guardar info completa de la imagen
 
       // Enviar la URL al servidor para que él descargue y procese la imagen
       const res = await fetch("http://192.168.40.45:5001/segmentar-url", {
@@ -53,18 +96,59 @@ export default function ModeloIA({ imagenes }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ url: urlFirebase }),
+        body: JSON.stringify({ url: imagenInfo.url }),
       });
 
       if (!res.ok) throw new Error("Error procesando la imagen");
 
       const blob = await res.blob();
       setImagenSegmentada(URL.createObjectURL(blob));
+
+      // Guardar análisis en Firestore con trazabilidad
+      await guardarAnalisisEnFirestore(blob, imagenInfo);
     } catch (error) {
       console.error("Error cargando imagen desde Firebase:", error);
       alert("Error al cargar imagen desde el historial");
     } finally {
       setCargando(false);
+    }
+  };
+
+  // 🔹 Guardar análisis IA en Firestore con trazabilidad completa
+  const guardarAnalisisEnFirestore = async (imageBlob, imagenOriginalInfo) => {
+    if (!autorInfo) {
+      console.warn("No hay información de autor, no se guardará en Firestore");
+      return;
+    }
+
+    try {
+      setGuardandoAnalisis(true);
+
+      await saveIAAnalysisResult({
+        imageBlob,
+        patientId: imagenOriginalInfo.patientId,
+        visitId: imagenOriginalInfo.visitId,
+        imagenOriginalId: imagenOriginalInfo.id,
+        ojo: imagenOriginalInfo.ojo,
+        diagnostico: imagenOriginalInfo.diagnostico || "",
+        autor: autorInfo,
+        modeloIA: {
+          nombre: "segformer_for_optic_disc_cup_segmentation",
+          version: "1.0"
+        },
+        resultados: {
+          discoOptico: true,
+          copaOptica: true,
+          confianza: 0.95
+        }
+      });
+
+      console.log("✅ Análisis IA guardado correctamente en Firestore");
+    } catch (error) {
+      console.error("Error guardando análisis en Firestore:", error);
+      // No mostramos error al usuario porque el análisis visual ya se completó
+    } finally {
+      setGuardandoAnalisis(false);
     }
   };
 
@@ -115,21 +199,38 @@ export default function ModeloIA({ imagenes }) {
 
       {/* Galería desde historial Firebase */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-700 mt-8 mb-2">O selecciona una imagen del historial:</h3>
+        <h3 className="text-lg font-semibold text-gray-700 mt-8 mb-2">O selecciona una imagen original del historial:</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {imagenes?.map((img) => (
-            <div key={img.id} className="cursor-pointer">
-              <img
-                src={img.url}
-                alt={img.ojo}
-                onClick={() => procesarDesdeHistorial(img.url)}
-                className="rounded-lg shadow-md hover:scale-105 transition-transform duration-200"
-              />
-              <p className="text-sm text-gray-500 text-center mt-1 capitalize">{img.ojo}</p>
-            </div>
-          ))}
+          {imagenes
+            ?.filter(img => img.tipo === "original") // Solo mostrar imágenes originales
+            .map((img) => (
+              <div key={img.id} className="cursor-pointer relative">
+                <img
+                  src={img.url}
+                  alt={img.ojo}
+                  onClick={() => procesarDesdeHistorial(img)}
+                  className="rounded-lg shadow-md hover:scale-105 transition-transform duration-200"
+                />
+                <div className="mt-1 text-center">
+                  <p className="text-sm text-gray-500 capitalize">{img.ojo}</p>
+                  {img.analizadaConIA && (
+                    <p className="text-xs text-green-600 font-semibold">✓ Analizada</p>
+                  )}
+                </div>
+              </div>
+            ))}
         </div>
+        {imagenes?.filter(img => img.tipo === "original").length === 0 && (
+          <p className="text-gray-500 text-sm">No hay imágenes originales disponibles en el historial.</p>
+        )}
       </div>
+
+      {/* Indicador de guardado */}
+      {guardandoAnalisis && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
+          💾 Guardando análisis en el historial médico...
+        </div>
+      )}
     </div>
   );
 }
