@@ -181,20 +181,36 @@ export const saveIAAnalysisResult = async ({
     confianza: 0.95
   }
 }) => {
+  console.log("🔵 [saveIAAnalysisResult] Iniciando guardado de análisis IA...");
+  console.log("📋 Parámetros recibidos:", {
+    blobSize: imageBlob?.size,
+    patientId,
+    visitId,
+    imagenOriginalId,
+    ojo,
+    autor
+  });
+
   try {
     // 1. Generar nombre único para el archivo
     const timestamp = Date.now();
     const fileName = `${timestamp}-${imagenOriginalId}-segmentacion.png`;
+    console.log("📝 Nombre de archivo generado:", fileName);
 
     // 2. Definir ruta en Storage
     const storagePath = `pacientes/${patientId}/visitas/${visitId}/imagenes/analisis_ia/${ojo}/${fileName}`;
+    console.log("📂 Ruta en Storage:", storagePath);
     const storageRef = ref(storage, storagePath);
 
     // 3. Subir blob a Storage
+    console.log("⬆️ Subiendo imagen a Firebase Storage...");
     await uploadBytes(storageRef, imageBlob);
+    console.log("✅ Imagen subida a Storage exitosamente");
 
     // 4. Obtener URL pública
+    console.log("🔗 Obteniendo URL pública...");
     const url = await getDownloadURL(storageRef);
+    console.log("✅ URL obtenida:", url);
 
     // 5. Obtener tamaño del blob
     const tamano = imageBlob.size;
@@ -210,7 +226,7 @@ export const saveIAAnalysisResult = async ({
       metadatos: {
         tamano,
         formato: "image/png",
-        dimensiones: null // Las dimensiones se pueden agregar si es necesario
+        dimensiones: null
       },
       fileName,
       storagePath,
@@ -223,12 +239,17 @@ export const saveIAAnalysisResult = async ({
       resultados
     };
 
+    console.log("💾 Guardando documento en Firestore...");
+    console.log("📄 Datos del documento:", analisisData);
+
     const analisisRef = await addDoc(
       collection(db, "pacientes", patientId, "visitas", visitId, "imagenes"),
       analisisData
     );
+    console.log("✅ Documento guardado en Firestore con ID:", analisisRef.id);
 
     // 7. Actualizar imagen original para marcar que fue analizada
+    console.log("🔄 Actualizando imagen original...");
     const originalImageRef = doc(
       db,
       "pacientes",
@@ -239,17 +260,27 @@ export const saveIAAnalysisResult = async ({
       imagenOriginalId
     );
 
+    const analisisIdsActuales = await getAnalisisIds(patientId, visitId, imagenOriginalId);
+    console.log("📋 IDs de análisis actuales:", analisisIdsActuales);
+
     await updateDoc(originalImageRef, {
       analizadaConIA: true,
-      analisisIds: [...(await getAnalisisIds(patientId, visitId, imagenOriginalId)), analisisRef.id]
+      analisisIds: [...analisisIdsActuales, analisisRef.id]
     });
+    console.log("✅ Imagen original actualizada");
 
+    console.log("🎉 [saveIAAnalysisResult] ¡Análisis guardado exitosamente!");
     return {
       id: analisisRef.id,
       ...analisisData
     };
   } catch (error) {
-    console.error("Error al guardar análisis IA:", error);
+    console.error("❌ [saveIAAnalysisResult] Error al guardar análisis IA:", error);
+    console.error("❌ Detalles del error:", {
+      message: error.message,
+      code: error.code,
+      stack: error.stack
+    });
     throw error;
   }
 };
