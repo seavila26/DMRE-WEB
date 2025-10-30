@@ -1,94 +1,112 @@
 // NuevaVisita.jsx
-import { useState } from "react";
-import { db, storage } from "../firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { collection, addDoc } from "firebase/firestore";
+import { useState, useEffect } from "react";
+import { db } from "../firebase";
+import { collection, addDoc, doc, getDoc } from "firebase/firestore";
+import { useAuth } from "../context/AuthContext";
+import { uploadMultipleOriginalImages } from "../utils/imageUtils";
 
 export default function NuevaVisita({ id, setVisitas, setNuevaVisita }) {
+  const { user } = useAuth();
   const [diagnostico, setDiagnostico] = useState("");
   const [imagenesDerecho, setImagenesDerecho] = useState([]);
   const [imagenesIzquierdo, setImagenesIzquierdo] = useState([]);
   const [subiendo, setSubiendo] = useState(false);
+  const [autorInfo, setAutorInfo] = useState(null);
 
-  const uploadMultiple = async (files, prefix) => {
-    if (!files || files.length === 0) return [];
-    return await Promise.all(
-      files.map(async (f) => {
-        const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${f.name}`;
-        const storagePath = `${prefix}/${fileName}`;
-        const sRef = ref(storage, storagePath);
-        await uploadBytes(sRef, f);
-        const url = await getDownloadURL(sRef);
-        return { url, storagePath, name: f.name };
-      })
-    );
-  };
+  // Obtener información del usuario autenticado
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      if (user) {
+        try {
+          const userDoc = await getDoc(doc(db, "usuarios", user.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setAutorInfo({
+              uid: user.uid,
+              nombre: userData.nombre || user.displayName || "Usuario",
+              email: user.email
+            });
+          } else {
+            setAutorInfo({
+              uid: user.uid,
+              nombre: user.displayName || "Usuario",
+              email: user.email
+            });
+          }
+        } catch (error) {
+          console.error("Error obteniendo info de usuario:", error);
+          setAutorInfo({
+            uid: user.uid,
+            nombre: user.displayName || "Usuario",
+            email: user.email
+          });
+        }
+      }
+    };
+
+    fetchUserInfo();
+  }, [user]);
 
   const handleNuevaVisita = async () => {
+    // Validar que haya información del autor
+    if (!autorInfo) {
+      alert("Error: No se pudo obtener información del usuario");
+      return;
+    }
+
     try {
       setSubiendo(true);
 
+      // 1. Crear documento de visita
       const visitaRef = await addDoc(collection(db, "pacientes", id, "visitas"), {
         fecha: new Date().toISOString(),
         diagnostico,
+        autor: autorInfo
       });
       const visitId = visitaRef.id;
 
-      const uploadsD = await uploadMultiple(
-        imagenesDerecho,
-        `pacientes/${id}/visitas/${visitId}/imagenes/derecho`
-      );
-      const uploadsI = await uploadMultiple(
-        imagenesIzquierdo,
-        `pacientes/${id}/visitas/${visitId}/imagenes/izquierdo`
-      );
+      // 2. Subir imágenes usando las utilidades con nueva estructura
+      const imagenesDerechoSubidas = await uploadMultipleOriginalImages({
+        files: imagenesDerecho,
+        patientId: id,
+        visitId,
+        ojo: "derecho",
+        diagnostico,
+        autor: autorInfo
+      });
 
-      const createVisitImageDocs = async (uploads, ojo) => {
-        if (!uploads || uploads.length === 0) return [];
-        return await Promise.all(
-          uploads.map(async (u) => {
-            const imageDoc = {
-              url: u.url,
-              ojo,
-              fecha: new Date().toISOString(),
-              origen: "visita",
-              diagnostico: diagnostico || "",
-              patientId: id,
-              visitId,
-              fileName: u.name,
-              storagePath: u.storagePath,
-            };
-            const imgRef = await addDoc(
-              collection(db, "pacientes", id, "visitas", visitId, "imagenes"),
-              imageDoc
-            );
-            return { id: imgRef.id, ...imageDoc };
-          })
-        );
-      };
+      const imagenesIzquierdoSubidas = await uploadMultipleOriginalImages({
+        files: imagenesIzquierdo,
+        patientId: id,
+        visitId,
+        ojo: "izquierdo",
+        diagnostico,
+        autor: autorInfo
+      });
 
-      const createdD = await createVisitImageDocs(uploadsD, "derecho");
-      const createdI = await createVisitImageDocs(uploadsI, "izquierdo");
-
+      // 3. Actualizar estado local de visitas
       const visitaData = {
         id: visitId,
         fecha: new Date().toISOString(),
         diagnostico,
+        autor: autorInfo,
         imagenes: {
-          derecho: createdD,
-          izquierdo: createdI,
+          derecho: imagenesDerechoSubidas,
+          izquierdo: imagenesIzquierdoSubidas,
         },
       };
       setVisitas((prev) => [visitaData, ...prev]);
 
+      // 4. Limpiar formulario
       setDiagnostico("");
       setImagenesDerecho([]);
       setImagenesIzquierdo([]);
       if (setNuevaVisita) setNuevaVisita(false);
+
       alert("✅ Visita registrada con éxito");
     } catch (err) {
       console.error("❌ Error guardando visita:", err);
-      alert("Error al guardar la visita");
+      alert("Error al guardar la visita: " + err.message);
     } finally {
       setSubiendo(false);
     }
