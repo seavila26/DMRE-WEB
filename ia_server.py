@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from io import BytesIO
 from PIL import Image
 import base64
@@ -44,7 +44,7 @@ def segmentar_fondo_ojo(image):
 # ------------------------------
 # ENDPOINT IA
 # ------------------------------
-@app.route("/api/segmentar", methods=["POST"])
+@app.route("/segmentar", methods=["POST"])
 def segmentar():
     if "imagen" not in request.files:
         return jsonify({"error": "No se envió ninguna imagen"}), 400
@@ -53,12 +53,12 @@ def segmentar():
     image = Image.open(file.stream)
     result_img = segmentar_fondo_ojo(image)
 
-    # Convertir resultado a base64
+    # Convertir resultado a bytes y enviarlo directamente
     buffer = BytesIO()
-    result_img.save(buffer, format="JPEG")
-    base64_img = base64.b64encode(buffer.getvalue()).decode("utf-8")
+    result_img.save(buffer, format="PNG")
+    buffer.seek(0)
 
-    return jsonify({"segmentada": base64_img})
+    return send_file(buffer, mimetype="image/png")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001)
