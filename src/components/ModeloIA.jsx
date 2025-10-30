@@ -5,6 +5,7 @@ export default function ModeloIA({ imagenes }) {
   const [imagenOriginal, setImagenOriginal] = useState(null);
   const [imagenOriginalURL, setImagenOriginalURL] = useState(null);
   const [imagenSegmentada, setImagenSegmentada] = useState(null);
+  const [imagenSeleccionadaInfo, setImagenSeleccionadaInfo] = useState(null);
   const [cargando, setCargando] = useState(false);
 
   // 🔹 Selección manual desde el dispositivo
@@ -12,6 +13,7 @@ export default function ModeloIA({ imagenes }) {
     setImagenOriginal(e.target.files[0]);
     setImagenOriginalURL(null);
     setImagenSegmentada(null);
+    setImagenSeleccionadaInfo(null);
   };
 
   // 🔹 Procesar imagen desde archivo
