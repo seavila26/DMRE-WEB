@@ -84,6 +84,8 @@ export default function ModeloIA({ imagenes }) {
 
   // 🔹 Procesar imagen desde el historial Firebase
   const procesarDesdeHistorial = async (imagenInfo) => {
+    console.log("📸 Imagen seleccionada del historial:", imagenInfo);
+
     try {
       setCargando(true);
       setImagenSegmentada(null);
@@ -117,13 +119,27 @@ export default function ModeloIA({ imagenes }) {
 
   // 🔹 Guardar análisis IA en Firestore con trazabilidad completa
   const guardarAnalisisEnFirestore = async (imageBlob, imagenOriginalInfo) => {
+    // Validar que tengamos información del autor
     if (!autorInfo) {
-      console.warn("No hay información de autor, no se guardará en Firestore");
+      console.warn("⚠️ No hay información de autor, no se guardará en Firestore");
+      alert("⚠️ No se pudo guardar el análisis: información de usuario no disponible");
+      return;
+    }
+
+    // Validar que la imagen tenga los campos necesarios
+    if (!imagenOriginalInfo.patientId || !imagenOriginalInfo.visitId) {
+      console.error("❌ La imagen no tiene patientId o visitId:", imagenOriginalInfo);
+      alert("⚠️ Esta imagen no puede guardarse automáticamente porque no está vinculada a una visita. Use imágenes del historial del paciente.");
       return;
     }
 
     try {
       setGuardandoAnalisis(true);
+      console.log("💾 Guardando análisis IA...", {
+        patientId: imagenOriginalInfo.patientId,
+        visitId: imagenOriginalInfo.visitId,
+        imagenId: imagenOriginalInfo.id
+      });
 
       await saveIAAnalysisResult({
         imageBlob,
@@ -145,9 +161,10 @@ export default function ModeloIA({ imagenes }) {
       });
 
       console.log("✅ Análisis IA guardado correctamente en Firestore");
+      alert("✅ Análisis guardado exitosamente en el historial médico");
     } catch (error) {
-      console.error("Error guardando análisis en Firestore:", error);
-      // No mostramos error al usuario porque el análisis visual ya se completó
+      console.error("❌ Error guardando análisis en Firestore:", error);
+      alert("❌ Error al guardar el análisis: " + error.message);
     } finally {
       setGuardandoAnalisis(false);
     }
@@ -167,6 +184,12 @@ export default function ModeloIA({ imagenes }) {
           <h3 className="text-lg font-semibold text-gray-700 flex items-center gap-2">
             📤 Cargar imagen desde dispositivo
           </h3>
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-4">
+            <p className="text-sm text-yellow-800">
+              ℹ️ <strong>Nota:</strong> Las imágenes cargadas desde tu dispositivo solo se procesarán temporalmente.
+              Para guardar el análisis en el historial médico, usa las imágenes del historial del paciente más abajo.
+            </p>
+          </div>
           <div className="flex flex-col md:flex-row gap-4 items-center">
             <input
               type="file"
@@ -224,9 +247,14 @@ export default function ModeloIA({ imagenes }) {
 
         {/* Card: Historial Firebase */}
         <div className="bg-white shadow-md rounded-2xl p-6">
-          <h3 className="text-lg font-semibold text-gray-700 mb-4">
-            📁 Seleccionar imagen del historial del paciente
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-700">
+              📁 Seleccionar imagen del historial del paciente
+            </h3>
+            <span className="bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full">
+              💾 Se guarda automáticamente
+            </span>
+          </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {imagenes
