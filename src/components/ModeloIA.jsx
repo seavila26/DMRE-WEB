@@ -70,7 +70,7 @@ export default function ModeloIA({ imagenes }) {
         {/* Título principal */}
         <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
           <Brain className="text-blue-600" /> 
-          Segmentación de Fondo de Ojo (IA)
+          Segmentación de Fondo de Ojo (IAA)
         </h2>
 
         {/* --- CARD: Subida y selección --- */}
