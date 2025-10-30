@@ -8,7 +8,7 @@ import PatientProfile from "../components/PatientProfile";
 import EyeImagesGallery from "../components/EyeImagesGallery";
 import VisitList from "../components/VisitList";
 import NuevaVisita from "../components/NuevaVisita";
-import ModeloIA from "../components/ModeloIA";
+import AnalisisIA from "../components/AnalisisIA";
 
 export default function PatientHistory() {
   const { id } = useParams();
@@ -93,15 +93,15 @@ setImagenesCombinadas({ derecho, izquierdo });
 
         {/* Tabs */}
         <div className="flex justify-center mb-8">
-          {["perfil", "imagenes", "visitas", "modeloIA"].map((item) => (
+          {["perfil", "imagenes", "visitas", "analisisIA"].map((item) => (
             <button
               key={item}
               onClick={() => setTab(item)}
               className={`px-6 py-2 mx-1 rounded-full font-medium transition-all
                 ${tab === item ? "bg-blue-600 text-white shadow" : "bg-white border border-gray-300 text-gray-600 hover:bg-gray-100"}`}
             >
-              {item === "modeloIA"
-                ? "Modelo IA"
+              {item === "analisisIA"
+                ? "Análisis IA"
                 : item.charAt(0).toUpperCase() + item.slice(1)}
             </button>
           ))}
@@ -116,8 +116,8 @@ setImagenesCombinadas({ derecho, izquierdo });
           />
           )}
 
-          {tab === "modeloIA" && (
-          <ModeloIA
+          {tab === "analisisIA" && (
+          <AnalisisIA
           imagenes={[
           ...imagenesCombinadas.derecho,
           ...imagenesCombinadas.izquierdo
@@ -138,7 +138,13 @@ setImagenesCombinadas({ derecho, izquierdo });
               ) : (
                 <NuevaVisita id={id} setVisitas={setVisitas} setNuevaVisita={setNuevaVisita} />
               )}
-              <VisitList visitas={visitas} />
+              <VisitList
+                visitas={visitas}
+                imagenes={[
+                  ...imagenesCombinadas.derecho,
+                  ...imagenesCombinadas.izquierdo
+                ]}
+              />
             </div>
           )}
         </div>
