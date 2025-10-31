@@ -193,7 +193,16 @@ export default function VisitList({ visitas, imagenes }) {
         {visitas.map((v) => (
           <li key={v.id} className="p-4 bg-white rounded shadow">
             <p><strong>📅 Fecha:</strong> {new Date(v.fecha).toLocaleString()}</p>
-            <p><strong>📝 Diagnóstico:</strong> {v.diagnostico}</p>
+            <p><strong>📝 Observación Clínica:</strong> {v.observacionClinica || v.diagnostico || "N/A"}</p>
+            <p><strong>🏥 Estadio de la Enfermedad:</strong> <span className={`font-semibold ${
+              v.estadioEnfermedad === "Normal" ? "text-green-600" :
+              v.estadioEnfermedad === "Leve" ? "text-yellow-600" :
+              v.estadioEnfermedad === "Moderada" ? "text-orange-600" :
+              v.estadioEnfermedad === "Avanzada" ? "text-red-600" :
+              v.estadioEnfermedad === "Severa" ? "text-red-700" :
+              v.estadioEnfermedad === "Terminal" ? "text-red-900" :
+              "text-gray-600"
+            }`}>{v.estadioEnfermedad || "No especificado"}</span></p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               <div>
@@ -399,12 +408,52 @@ export default function VisitList({ visitas, imagenes }) {
               </div>
 
               {/* Información adicional */}
-              {imagenSeleccionada.diagnostico && (
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-600 mb-1">Diagnóstico de la visita:</p>
-                  <p className="font-semibold text-gray-800">{imagenSeleccionada.diagnostico}</p>
-                </div>
-              )}
+              <div className="space-y-4">
+                {imagenSeleccionada.diagnostico && (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-sm text-gray-600 mb-1">Observación clínica:</p>
+                    <p className="font-semibold text-gray-800">{imagenSeleccionada.diagnostico}</p>
+                  </div>
+                )}
+
+                {/* Mostrar diagnóstico IA si está disponible */}
+                {(() => {
+                  const resultadoIA = obtenerResultadoIA(imagenSeleccionada.id);
+                  if (resultadoIA && resultadoIA.diagnosticoIA) {
+                    return (
+                      <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-4 border-2 border-purple-200">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-2xl">🤖</span>
+                          <h5 className="font-bold text-purple-800">Diagnóstico IA</h5>
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-gray-700">
+                            <strong>Estadio detectado:</strong>{" "}
+                            <span className={`font-bold ${
+                              resultadoIA.diagnosticoIA === "Normal" ? "text-green-600" :
+                              resultadoIA.diagnosticoIA === "Leve" ? "text-yellow-600" :
+                              resultadoIA.diagnosticoIA === "Moderada" ? "text-orange-600" :
+                              resultadoIA.diagnosticoIA === "Avanzada" ? "text-red-600" :
+                              resultadoIA.diagnosticoIA === "Severa" ? "text-red-700" :
+                              resultadoIA.diagnosticoIA === "Terminal" ? "text-red-900" :
+                              "text-gray-600"
+                            }`}>
+                              {resultadoIA.diagnosticoIA}
+                            </span>
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            <strong>Confianza del modelo:</strong> {(resultadoIA.confianzaIA * 100).toFixed(1)}%
+                          </p>
+                          <p className="text-xs text-gray-500 italic mt-2">
+                            ℹ️ Este diagnóstico es generado automáticamente por el modelo de IA y debe ser validado por un profesional médico.
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
 
               {/* Botón cerrar */}
               <div className="flex gap-4">

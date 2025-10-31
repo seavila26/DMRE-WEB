@@ -7,7 +7,8 @@ import { uploadMultipleOriginalImages } from "../utils/imageUtils";
 
 export default function NuevaVisita({ id, setVisitas, setNuevaVisita }) {
   const { user } = useAuth();
-  const [diagnostico, setDiagnostico] = useState("");
+  const [observacionClinica, setObservacionClinica] = useState("");
+  const [estadioEnfermedad, setEstadioEnfermedad] = useState("");
   const [imagenesDerecho, setImagenesDerecho] = useState([]);
   const [imagenesIzquierdo, setImagenesIzquierdo] = useState([]);
   const [subiendo, setSubiendo] = useState(false);
@@ -54,13 +55,20 @@ export default function NuevaVisita({ id, setVisitas, setNuevaVisita }) {
       return;
     }
 
+    // Validar que el estadio de la enfermedad esté seleccionado
+    if (!estadioEnfermedad) {
+      alert("⚠️ Por favor, selecciona el estadio de la enfermedad");
+      return;
+    }
+
     try {
       setSubiendo(true);
 
       // 1. Crear documento de visita
       const visitaRef = await addDoc(collection(db, "pacientes", id, "visitas"), {
         fecha: new Date().toISOString(),
-        diagnostico,
+        observacionClinica,
+        estadioEnfermedad,
         autor: autorInfo
       });
       const visitId = visitaRef.id;
@@ -71,7 +79,8 @@ export default function NuevaVisita({ id, setVisitas, setNuevaVisita }) {
         patientId: id,
         visitId,
         ojo: "derecho",
-        diagnostico,
+        diagnostico: observacionClinica,
+        estadioEnfermedad,
         autor: autorInfo
       });
 
@@ -80,7 +89,8 @@ export default function NuevaVisita({ id, setVisitas, setNuevaVisita }) {
         patientId: id,
         visitId,
         ojo: "izquierdo",
-        diagnostico,
+        diagnostico: observacionClinica,
+        estadioEnfermedad,
         autor: autorInfo
       });
 
@@ -88,7 +98,8 @@ export default function NuevaVisita({ id, setVisitas, setNuevaVisita }) {
       const visitaData = {
         id: visitId,
         fecha: new Date().toISOString(),
-        diagnostico,
+        observacionClinica,
+        estadioEnfermedad,
         autor: autorInfo,
         imagenes: {
           derecho: imagenesDerechoSubidas,
@@ -98,7 +109,8 @@ export default function NuevaVisita({ id, setVisitas, setNuevaVisita }) {
       setVisitas((prev) => [visitaData, ...prev]);
 
       // 4. Limpiar formulario
-      setDiagnostico("");
+      setObservacionClinica("");
+      setEstadioEnfermedad("");
       setImagenesDerecho([]);
       setImagenesIzquierdo([]);
       if (setNuevaVisita) setNuevaVisita(false);
@@ -114,18 +126,39 @@ export default function NuevaVisita({ id, setVisitas, setNuevaVisita }) {
 
   return (
     <div className="bg-white shadow-xl rounded-2xl p-6 space-y-6 border border-gray-200">
-      {/* Diagnóstico */}
+      {/* Observación Clínica */}
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Diagnóstico
+          Observación Clínica
         </label>
         <textarea
-          value={diagnostico}
-          onChange={(e) => setDiagnostico(e.target.value)}
-          placeholder="Escribe el diagnóstico..."
+          value={observacionClinica}
+          onChange={(e) => setObservacionClinica(e.target.value)}
+          placeholder="Escribe la observación clínica..."
           className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
           rows={4}
         />
+      </div>
+
+      {/* Estadio de la Enfermedad */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">
+          Estadio de la Enfermedad <span className="text-red-500">*</span>
+        </label>
+        <select
+          value={estadioEnfermedad}
+          onChange={(e) => setEstadioEnfermedad(e.target.value)}
+          className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          required
+        >
+          <option value="">Selecciona el estadio...</option>
+          <option value="Normal">Normal</option>
+          <option value="Leve">Leve</option>
+          <option value="Moderada">Moderada</option>
+          <option value="Avanzada">Avanzada</option>
+          <option value="Severa">Severa</option>
+          <option value="Terminal">Terminal</option>
+        </select>
       </div>
 
       {/* Imágenes */}

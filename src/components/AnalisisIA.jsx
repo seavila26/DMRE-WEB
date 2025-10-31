@@ -275,6 +275,22 @@ export default function AnalisisIA({ imagenes }) {
                       <p>
                         <strong>📈 Confianza:</strong> {(analisis.resultados?.confianza * 100).toFixed(0)}%
                       </p>
+                      {analisis.diagnosticoIA && (
+                        <p>
+                          <strong>🤖 Diagnóstico IA:</strong>{" "}
+                          <span className={`font-semibold ${
+                            analisis.diagnosticoIA === "Normal" ? "text-green-600" :
+                            analisis.diagnosticoIA === "Leve" ? "text-yellow-600" :
+                            analisis.diagnosticoIA === "Moderada" ? "text-orange-600" :
+                            analisis.diagnosticoIA === "Avanzada" ? "text-red-600" :
+                            analisis.diagnosticoIA === "Severa" ? "text-red-700" :
+                            analisis.diagnosticoIA === "Terminal" ? "text-red-900" :
+                            "text-gray-600"
+                          }`}>
+                            {analisis.diagnosticoIA}
+                          </span>
+                        </p>
+                      )}
                       {analisis.resultados?.discoOptico && (
                         <p className="text-green-600">✓ Disco óptico detectado</p>
                       )}
@@ -389,10 +405,45 @@ export default function AnalisisIA({ imagenes }) {
                       <p className="font-semibold text-gray-800">{analisisSeleccionado.autor?.nombre}</p>
                     </div>
                     <div className="bg-white p-4 rounded-lg shadow">
-                      <p className="text-sm text-gray-600 mb-1">Diagnóstico</p>
+                      <p className="text-sm text-gray-600 mb-1">Observación Clínica</p>
                       <p className="font-semibold text-gray-800">{analisisSeleccionado.diagnostico || "N/A"}</p>
                     </div>
                   </div>
+
+                  {/* Diagnóstico IA */}
+                  {analisisSeleccionado.diagnosticoIA && (
+                    <div className="mt-6 bg-gradient-to-br from-purple-50 to-blue-50 border-l-4 border-purple-500 p-4 rounded">
+                      <h5 className="font-bold text-purple-900 mb-3 flex items-center gap-2">
+                        <span className="text-xl">🤖</span>
+                        Diagnóstico Generado por IA
+                      </h5>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-white p-3 rounded-lg">
+                          <p className="text-sm text-gray-600 mb-1">Estadio detectado</p>
+                          <p className={`font-bold text-lg ${
+                            analisisSeleccionado.diagnosticoIA === "Normal" ? "text-green-600" :
+                            analisisSeleccionado.diagnosticoIA === "Leve" ? "text-yellow-600" :
+                            analisisSeleccionado.diagnosticoIA === "Moderada" ? "text-orange-600" :
+                            analisisSeleccionado.diagnosticoIA === "Avanzada" ? "text-red-600" :
+                            analisisSeleccionado.diagnosticoIA === "Severa" ? "text-red-700" :
+                            analisisSeleccionado.diagnosticoIA === "Terminal" ? "text-red-900" :
+                            "text-gray-600"
+                          }`}>
+                            {analisisSeleccionado.diagnosticoIA}
+                          </p>
+                        </div>
+                        <div className="bg-white p-3 rounded-lg">
+                          <p className="text-sm text-gray-600 mb-1">Confianza del modelo</p>
+                          <p className="font-bold text-lg text-blue-600">
+                            {(analisisSeleccionado.confianzaIA * 100).toFixed(1)}%
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-500 italic mt-3">
+                        ℹ️ Este diagnóstico es generado automáticamente por el modelo de IA y debe ser validado por un profesional médico.
+                      </p>
+                    </div>
+                  )}
 
                   {/* Resultados de detección */}
                   <div className="mt-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
