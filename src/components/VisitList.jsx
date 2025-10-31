@@ -12,6 +12,7 @@ export default function VisitList({ visitas, imagenes }) {
   const [guardandoAnalisis, setGuardandoAnalisis] = useState(false);
   const [imagenSegmentada, setImagenSegmentada] = useState(null);
   const [autorInfo, setAutorInfo] = useState(null);
+  const [zoomLevel, setZoomLevel] = useState(1);
 
   // Obtener información del usuario autenticado
   useEffect(() => {
@@ -52,6 +53,7 @@ export default function VisitList({ visitas, imagenes }) {
     setImagenSeleccionada(imagen);
     setModalAbierto(true);
     setImagenSegmentada(null);
+    setZoomLevel(1); // Reset zoom al abrir
   };
 
   // Cerrar modal
@@ -59,6 +61,20 @@ export default function VisitList({ visitas, imagenes }) {
     setModalAbierto(false);
     setImagenSeleccionada(null);
     setImagenSegmentada(null);
+    setZoomLevel(1); // Reset zoom al cerrar
+  };
+
+  // Funciones de zoom
+  const zoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 0.25, 3)); // Máximo 3x
+  };
+
+  const zoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 0.25, 0.5)); // Mínimo 0.5x
+  };
+
+  const resetZoom = () => {
+    setZoomLevel(1);
   };
 
   // Verificar si una imagen ya fue analizada
@@ -67,6 +83,10 @@ export default function VisitList({ visitas, imagenes }) {
     const imagen = imagenes.find(img => img.id === imagenId);
     if (!imagen) return "sin_analizar";
 
+    // Las imágenes de tipo "analisis_ia" SON el análisis mismo
+    if (imagen.tipo === "analisis_ia") return "analizada";
+
+    // Las imágenes originales verifican el campo analizadaConIA
     if (imagen.analizadaConIA) return "analizada";
     return "sin_analizar";
   };
@@ -74,6 +94,15 @@ export default function VisitList({ visitas, imagenes }) {
   // Obtener resultado de análisis si existe
   const obtenerResultadoIA = (imagenId) => {
     if (!imagenes) return null;
+
+    const imagen = imagenes.find(img => img.id === imagenId);
+
+    // Si la imagen seleccionada ES el análisis IA, retornarla a sí misma
+    if (imagen && imagen.tipo === "analisis_ia") {
+      return imagen;
+    }
+
+    // Si es una imagen original, buscar su análisis asociado
     return imagenes.find(img =>
       img.tipo === "analisis_ia" && img.imagenOriginalId === imagenId
     );
@@ -312,36 +341,83 @@ export default function VisitList({ visitas, imagenes }) {
             <div className="flex flex-1 overflow-hidden">
 
               {/* Columna Izquierda - Visor de Imagen */}
-              <div className="flex-1 bg-slate-900 p-6 flex items-center justify-center overflow-auto">
-                <div className="w-full max-w-2xl">
-                  {imagenSegmentada ? (
-                    <div className="space-y-4">
-                      <div className="bg-slate-800 rounded-lg p-3">
-                        <p className="text-xs text-slate-400 mb-2 uppercase tracking-wide">Original</p>
-                        <img
-                          src={imagenSeleccionada.url}
-                          alt="Original"
-                          className="w-full rounded-lg shadow-lg"
-                        />
-                      </div>
-                      <div className="bg-slate-800 rounded-lg p-3">
-                        <p className="text-xs text-slate-400 mb-2 uppercase tracking-wide">Segmentación IA</p>
-                        <img
-                          src={imagenSegmentada}
-                          alt="Segmentada"
-                          className="w-full rounded-lg shadow-lg"
-                        />
-                      </div>
+              <div className="flex-1 bg-slate-900 flex flex-col">
+                {/* Controles de Zoom */}
+                <div className="bg-slate-800 px-6 py-3 flex items-center justify-between border-b border-slate-700">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
+                    </svg>
+                    <span className="text-xs text-slate-400 uppercase tracking-wide">Zoom: {(zoomLevel * 100).toFixed(0)}%</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={zoomOut}
+                      disabled={zoomLevel <= 0.5}
+                      className="p-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded disabled:opacity-30 disabled:cursor-not-allowed transition"
+                      title="Zoom out"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={resetZoom}
+                      className="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs rounded transition"
+                      title="Reset zoom"
+                    >
+                      100%
+                    </button>
+                    <button
+                      onClick={zoomIn}
+                      disabled={zoomLevel >= 3}
+                      className="p-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded disabled:opacity-30 disabled:cursor-not-allowed transition"
+                      title="Zoom in"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Área de Imagen con Scroll */}
+                <div className="flex-1 p-6 overflow-auto">
+                  <div className="flex items-center justify-center min-h-full">
+                    <div
+                      className="transition-transform duration-200 ease-out"
+                      style={{ transform: `scale(${zoomLevel})` }}
+                    >
+                      {imagenSegmentada ? (
+                        <div className="space-y-4">
+                          <div className="bg-slate-800 rounded-lg p-3">
+                            <p className="text-xs text-slate-400 mb-2 uppercase tracking-wide">Original</p>
+                            <img
+                              src={imagenSeleccionada.url}
+                              alt="Original"
+                              className="w-full max-w-2xl rounded-lg shadow-lg"
+                            />
+                          </div>
+                          <div className="bg-slate-800 rounded-lg p-3">
+                            <p className="text-xs text-slate-400 mb-2 uppercase tracking-wide">Segmentación IA</p>
+                            <img
+                              src={imagenSegmentada}
+                              alt="Segmentada"
+                              className="w-full max-w-2xl rounded-lg shadow-lg"
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="bg-slate-800 rounded-lg p-4">
+                          <img
+                            src={imagenSeleccionada.url}
+                            alt="Original"
+                            className="w-full max-w-2xl rounded-lg shadow-xl"
+                          />
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <div className="bg-slate-800 rounded-lg p-4">
-                      <img
-                        src={imagenSeleccionada.url}
-                        alt="Original"
-                        className="w-full rounded-lg shadow-xl"
-                      />
-                    </div>
-                  )}
+                  </div>
                 </div>
               </div>
 
