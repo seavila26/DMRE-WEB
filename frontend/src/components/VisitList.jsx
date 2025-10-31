@@ -122,7 +122,7 @@ export default function VisitList({ visitas, imagenes }) {
       setImagenSegmentada(null);
 
       // Enviar la URL al servidor para que él descargue y procese la imagen
-      const res = await fetch("http://192.168.40.45:5001/segmentar-url", {
+      const res = await fetch("http://172.18.84.21:5001/segmentar-url", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
