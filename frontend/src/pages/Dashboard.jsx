@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { db } from "../firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where, collectionGroup } from "firebase/firestore";
 import { logoutMedico } from "../auth";
 import { useAuth } from "../context/AuthContext";
 import Sidebar from "../components/Sidebar";
@@ -9,16 +9,69 @@ import {UserGroupIcon, ClipboardDocumentListIcon, CpuChipIcon} from "@heroicons/
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [pacientes, setPacientes] = useState([]);
-  const { user } = useAuth();
+  const [nuevosCasos, setNuevosCasos] = useState(0);
+  const [analisisIA, setAnalisisIA] = useState(0);
+  const { user, rol } = useAuth();
 
   useEffect(() => {
     const fetchPacientes = async () => {
-      const snapshot = await getDocs(collection(db, "pacientes"));
-      setPacientes(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      try {
+        // Si viene medicoId en query params (desde admin), filtrar por ese médico
+        const medicoIdParam = searchParams.get("medicoId");
+        const medicoIdFinal = medicoIdParam || (rol === "medico" ? user?.uid : null);
+
+        let pacientesQuery;
+        if (medicoIdFinal) {
+          // Filtrar pacientes por médico asignado
+          pacientesQuery = query(
+            collection(db, "pacientes"),
+            where("medicoId", "==", medicoIdFinal)
+          );
+        } else {
+          // Admin sin filtro: mostrar todos los pacientes
+          pacientesQuery = collection(db, "pacientes");
+        }
+
+        const snapshot = await getDocs(pacientesQuery);
+        const pacientesData = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        setPacientes(pacientesData);
+
+        // Calcular nuevos casos (últimos 30 días)
+        const hace30Dias = new Date();
+        hace30Dias.setDate(hace30Dias.getDate() - 30);
+        const nuevos = pacientesData.filter(
+          (p) => p.fechaRegistro && new Date(p.fechaRegistro) > hace30Dias
+        );
+        setNuevosCasos(nuevos.length);
+
+        // Calcular análisis IA (contar imágenes analizadas con IA)
+        let totalAnalisisIA = 0;
+        for (const paciente of pacientesData) {
+          const visitasSnapshot = await getDocs(
+            collection(db, "pacientes", paciente.id, "visitas")
+          );
+          for (const visitaDoc of visitasSnapshot.docs) {
+            const imagenesSnapshot = await getDocs(
+              collection(db, "pacientes", paciente.id, "visitas", visitaDoc.id, "imagenes")
+            );
+            const imagenesIA = imagenesSnapshot.docs.filter(
+              (imgDoc) => imgDoc.data().tipo === "analisis_ia"
+            );
+            totalAnalisisIA += imagenesIA.length;
+          }
+        }
+        setAnalisisIA(totalAnalisisIA);
+      } catch (error) {
+        console.error("Error cargando datos:", error);
+      }
     };
-    fetchPacientes();
-  }, []);
+
+    if (user) {
+      fetchPacientes();
+    }
+  }, [user, rol, searchParams]);
 
   const handleLogout = async () => {
     await logoutMedico();
@@ -46,8 +99,8 @@ export default function Dashboard() {
           <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               { title: "Pacientes Activos", value: pacientes.length, icon: UserGroupIcon },
-              { title: "Nuevos Casos", value: 3, icon: ClipboardDocumentListIcon },
-              { title: "Análisis IA", value: 12, icon: CpuChipIcon },
+              { title: "Nuevos Casos (30 días)", value: nuevosCasos, icon: ClipboardDocumentListIcon },
+              { title: "Análisis IA Realizados", value: analisisIA, icon: CpuChipIcon },
             ].map((card) => (
               <div
                 key={card.title}

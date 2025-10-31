@@ -21,6 +21,10 @@ export default function NuevoUsuarioWizard() {
     especialidad: "",
     rol: "medico",
     password: "",
+    telefono: "",
+    cedulaProfesional: "",
+    institucion: "",
+    fechaNacimiento: "",
   });
   const [mostrarPass, setMostrarPass] = useState(false);
 
@@ -100,15 +104,70 @@ export default function NuevoUsuarioWizard() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Especialidad
               </label>
-              <div className="relative">
+              <div className="relative mb-4">
                 <BriefcaseIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                 <input
                   type="text"
                   name="especialidad"
                   value={form.especialidad}
                   onChange={handleChange}
-                  placeholder="Ej. Cardiología"
+                  placeholder="Ej. Oftalmología"
                   className="pl-10 border p-2 w-full rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Teléfono
+              </label>
+              <div className="relative mb-4">
+                <input
+                  type="tel"
+                  name="telefono"
+                  value={form.telefono}
+                  onChange={handleChange}
+                  placeholder="Ej. +52 123 456 7890"
+                  className="border p-2 w-full rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Cédula Profesional
+              </label>
+              <div className="relative mb-4">
+                <input
+                  type="text"
+                  name="cedulaProfesional"
+                  value={form.cedulaProfesional}
+                  onChange={handleChange}
+                  placeholder="Ej. 12345678"
+                  className="border p-2 w-full rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Institución / Hospital
+              </label>
+              <div className="relative mb-4">
+                <input
+                  type="text"
+                  name="institucion"
+                  value={form.institucion}
+                  onChange={handleChange}
+                  placeholder="Ej. Hospital General"
+                  className="border p-2 w-full rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Fecha de Nacimiento
+              </label>
+              <div className="relative">
+                <input
+                  type="date"
+                  name="fechaNacimiento"
+                  value={form.fechaNacimiento}
+                  onChange={handleChange}
+                  className="border p-2 w-full rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -215,6 +274,10 @@ export default function NuevoUsuarioWizard() {
                 <p><b>💼 Especialidad:</b> {form.especialidad || "No especificada"}</p>
                 <p><b>📧 Correo:</b> {form.correo}</p>
                 <p><b>🛡 Rol:</b> {form.rol}</p>
+                {form.telefono && <p><b>📞 Teléfono:</b> {form.telefono}</p>}
+                {form.cedulaProfesional && <p><b>📋 Cédula:</b> {form.cedulaProfesional}</p>}
+                {form.institucion && <p><b>🏥 Institución:</b> {form.institucion}</p>}
+                {form.fechaNacimiento && <p><b>🎂 Fecha de Nac.:</b> {form.fechaNacimiento}</p>}
               </div>
 
               <div className="mt-6 flex justify-between">
