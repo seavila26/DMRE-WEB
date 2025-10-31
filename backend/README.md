@@ -10,8 +10,10 @@ Backend del sistema DMRE que proporciona análisis de imágenes de fondo de ojo 
 
 ## 📋 Requisitos
 
-- Python 3.8 o superior
+- Python 3.8 o superior (recomendado: Python 3.11 o 3.12)
 - pip
+
+> **⚠️ Nota sobre Python 3.13**: Si usas Python 3.13, algunas dependencias pueden tener problemas de compatibilidad. Recomendamos usar Python 3.11 o 3.12 para mejor estabilidad. Si prefieres continuar con Python 3.13, el `requirements.txt` está configurado con versiones flexibles para permitir instalación de versiones compatibles.
 
 ## 🚀 Instalación
 
@@ -126,6 +128,31 @@ curl http://localhost:5001/segmentar
 | requests | 2.31.0 | Descarga de imágenes por URL |
 
 ## 🐛 Troubleshooting
+
+### Error: Pillow build error en Python 3.13
+
+Si ves un error como `KeyError: '__version__'` al instalar Pillow, tienes dos opciones:
+
+**Opción 1: Usar Python 3.11 o 3.12 (recomendado)**
+```bash
+# Descargar Python 3.11 desde python.org
+# Crear entorno virtual con Python 3.11:
+py -3.11 -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+**Opción 2: Continuar con Python 3.13**
+```bash
+# Actualizar pip primero
+python -m pip install --upgrade pip
+
+# Instalar paquetes uno por uno (permite versiones más recientes)
+pip install Flask flask-cors requests numpy
+pip install Pillow  # Instalará la última versión compatible
+pip install torch --index-url https://download.pytorch.org/whl/cpu
+pip install transformers
+```
 
 ### Error: Puerto 5001 en uso
 
