@@ -275,194 +275,332 @@ export default function VisitList({ visitas, imagenes }) {
         ))}
       </ul>
 
-      {/* Modal de imagen con opción de analizar */}
+      {/* Modal Clínico de Imagen */}
       {modalAbierto && imagenSeleccionada && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            {/* Header del modal */}
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-2xl">
-              <div className="flex items-center justify-between">
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-lg shadow-2xl max-w-7xl w-full h-[90vh] flex flex-col">
+
+            {/* Header Clínico - Minimalista y Profesional */}
+            <div className="bg-gradient-to-r from-slate-700 to-slate-600 text-white px-6 py-4 rounded-t-lg flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="bg-white bg-opacity-20 p-2 rounded-lg">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </div>
                 <div>
-                  <h3 className="text-2xl font-bold">
-                    {imagenSeleccionada.ojo === "derecho" ? "👁️ Ojo Derecho" : "👁️ Ojo Izquierdo"}
+                  <h3 className="text-lg font-semibold">
+                    {imagenSeleccionada.ojo === "derecho" ? "Ojo Derecho" : "Ojo Izquierdo"}
                   </h3>
-                  <p className="text-blue-100 text-sm mt-1">
+                  <p className="text-sm text-slate-200">
                     {imagenSeleccionada.fecha && formatearFecha(imagenSeleccionada.fecha)}
                   </p>
                 </div>
-                <button
-                  onClick={cerrarModal}
-                  className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
               </div>
+              <button
+                onClick={cerrarModal}
+                className="text-white hover:bg-white hover:bg-opacity-10 rounded-lg p-2 transition"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
 
-            {/* Contenido del modal */}
-            <div className="p-6 space-y-6">
-              {/* Imagen original */}
-              <div>
-                <h4 className="text-lg font-bold text-gray-800 mb-3">🖼️ Imagen Original</h4>
-                <img
-                  src={imagenSeleccionada.url}
-                  alt="Original"
-                  className="w-full rounded-lg shadow-lg"
-                />
+            {/* Contenido Principal - Layout de 2 Columnas */}
+            <div className="flex flex-1 overflow-hidden">
+
+              {/* Columna Izquierda - Visor de Imagen */}
+              <div className="flex-1 bg-slate-900 p-6 flex items-center justify-center overflow-auto">
+                <div className="w-full max-w-2xl">
+                  {imagenSegmentada ? (
+                    <div className="space-y-4">
+                      <div className="bg-slate-800 rounded-lg p-3">
+                        <p className="text-xs text-slate-400 mb-2 uppercase tracking-wide">Original</p>
+                        <img
+                          src={imagenSeleccionada.url}
+                          alt="Original"
+                          className="w-full rounded-lg shadow-lg"
+                        />
+                      </div>
+                      <div className="bg-slate-800 rounded-lg p-3">
+                        <p className="text-xs text-slate-400 mb-2 uppercase tracking-wide">Segmentación IA</p>
+                        <img
+                          src={imagenSegmentada}
+                          alt="Segmentada"
+                          className="w-full rounded-lg shadow-lg"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-slate-800 rounded-lg p-4">
+                      <img
+                        src={imagenSeleccionada.url}
+                        alt="Original"
+                        className="w-full rounded-lg shadow-xl"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Estado y botón de análisis */}
-              <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-                {(() => {
-                  const estadoAnalisis = obtenerEstadoAnalisis(imagenSeleccionada.id);
-                  const resultadoIA = obtenerResultadoIA(imagenSeleccionada.id);
+              {/* Columna Derecha - Panel de Información (3 Bloques) */}
+              <div className="w-96 bg-gray-50 border-l border-gray-200 flex flex-col overflow-y-auto">
 
-                  if (estadoAnalisis === "analizada" && resultadoIA) {
-                    return (
-                      <div>
-                        <p className="font-semibold text-green-700 mb-2 flex items-center gap-2">
-                          ✅ Esta imagen ya fue analizada
-                        </p>
-                        <p className="text-sm text-gray-600 mb-3">
-                          Análisis realizado el {formatearFecha(resultadoIA.fechaAnalisis)} por {resultadoIA.autor?.nombre}
-                        </p>
-                        {imagenSegmentada && (
-                          <div className="mt-4">
-                            <h4 className="text-lg font-bold text-gray-800 mb-3">🎯 Resultado IA</h4>
-                            <img
-                              src={imagenSegmentada}
-                              alt="Segmentada"
-                              className="w-full rounded-lg shadow-lg"
-                            />
-                            <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                              <p className="font-semibold text-blue-800 mb-2">📊 Análisis Completado</p>
-                              <div className="text-sm text-gray-700 space-y-1">
-                                <p>✅ <strong>Disco Óptico:</strong> Detectado</p>
-                                <p>✅ <strong>Copa Óptica:</strong> Detectada</p>
-                                <p>📈 <strong>Confianza:</strong> 95%</p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                        <button
-                          onClick={() => analizarConIA(imagenSeleccionada)}
-                          disabled={cargando || guardandoAnalisis}
-                          className="mt-3 w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        >
-                          {cargando ? (
-                            <>⏳ Analizando...</>
-                          ) : guardandoAnalisis ? (
-                            <>💾 Guardando...</>
-                          ) : (
-                            <>🔄 Analizar Nuevamente con IA</>
-                          )}
-                        </button>
-                      </div>
-                    );
-                  } else {
-                    return (
-                      <div>
-                        <p className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                          ⚪ Esta imagen aún no ha sido analizada
-                        </p>
-                        <p className="text-sm text-gray-600 mb-3">
-                          Haz clic en el botón para procesarla con inteligencia artificial
-                        </p>
-                        {imagenSegmentada && (
-                          <div className="mt-4">
-                            <h4 className="text-lg font-bold text-gray-800 mb-3">🎯 Resultado IA</h4>
-                            <img
-                              src={imagenSegmentada}
-                              alt="Segmentada"
-                              className="w-full rounded-lg shadow-lg"
-                            />
-                            <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                              <p className="font-semibold text-blue-800 mb-2">📊 Análisis Completado</p>
-                              <div className="text-sm text-gray-700 space-y-1">
-                                <p>✅ <strong>Disco Óptico:</strong> Detectado</p>
-                                <p>✅ <strong>Copa Óptica:</strong> Detectada</p>
-                                <p>📈 <strong>Confianza:</strong> 95%</p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                        <button
-                          onClick={() => analizarConIA(imagenSeleccionada)}
-                          disabled={cargando || guardandoAnalisis}
-                          className="mt-3 w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        >
-                          {cargando ? (
-                            <>⏳ Analizando...</>
-                          ) : guardandoAnalisis ? (
-                            <>💾 Guardando...</>
-                          ) : (
-                            <>🧠 Analizar con IA</>
-                          )}
-                        </button>
-                      </div>
-                    );
-                  }
-                })()}
-              </div>
-
-              {/* Información adicional */}
-              <div className="space-y-4">
-                {imagenSeleccionada.diagnostico && (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-sm text-gray-600 mb-1">Observación clínica:</p>
-                    <p className="font-semibold text-gray-800">{imagenSeleccionada.diagnostico}</p>
+                {/* BLOQUE 1: DATOS CLÍNICOS */}
+                <div className="bg-white border-b border-gray-200 p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <h4 className="font-semibold text-gray-800 uppercase text-xs tracking-wide">Datos Clínicos</h4>
                   </div>
-                )}
 
-                {/* Mostrar diagnóstico IA si está disponible */}
-                {(() => {
-                  const resultadoIA = obtenerResultadoIA(imagenSeleccionada.id);
-                  if (resultadoIA && resultadoIA.diagnosticoIA) {
-                    return (
-                      <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-4 border-2 border-purple-200">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-2xl">🤖</span>
-                          <h5 className="font-bold text-purple-800">Diagnóstico IA</h5>
-                        </div>
-                        <div className="space-y-2">
-                          <p className="text-gray-700">
-                            <strong>Estadio detectado:</strong>{" "}
-                            <span className={`font-bold ${
-                              resultadoIA.diagnosticoIA === "Normal" ? "text-green-600" :
-                              resultadoIA.diagnosticoIA === "Leve" ? "text-yellow-600" :
-                              resultadoIA.diagnosticoIA === "Moderada" ? "text-orange-600" :
-                              resultadoIA.diagnosticoIA === "Avanzada" ? "text-red-600" :
-                              resultadoIA.diagnosticoIA === "Severa" ? "text-red-700" :
-                              resultadoIA.diagnosticoIA === "Terminal" ? "text-red-900" :
-                              "text-gray-600"
-                            }`}>
-                              {resultadoIA.diagnosticoIA}
-                            </span>
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            <strong>Confianza del modelo:</strong> {(resultadoIA.confianzaIA * 100).toFixed(1)}%
-                          </p>
-                          <p className="text-xs text-gray-500 italic mt-2">
-                            ℹ️ Este diagnóstico es generado automáticamente por el modelo de IA y debe ser validado por un profesional médico.
-                          </p>
-                        </div>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs text-gray-500 uppercase tracking-wide">Lateralidad</label>
+                      <p className="text-sm font-medium text-gray-800 mt-1">
+                        {imagenSeleccionada.ojo === "derecho" ? "Ojo Derecho (OD)" : "Ojo Izquierdo (OI)"}
+                      </p>
+                    </div>
+
+                    {imagenSeleccionada.fecha && (
+                      <div>
+                        <label className="text-xs text-gray-500 uppercase tracking-wide">Fecha de captura</label>
+                        <p className="text-sm font-medium text-gray-800 mt-1">
+                          {formatearFecha(imagenSeleccionada.fecha)}
+                        </p>
                       </div>
-                    );
-                  }
-                  return null;
-                })()}
-              </div>
+                    )}
 
-              {/* Botón cerrar */}
-              <div className="flex gap-4">
-                <button
-                  onClick={cerrarModal}
-                  className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition"
-                >
-                  Cerrar
-                </button>
+                    {imagenSeleccionada.diagnostico && (
+                      <div>
+                        <label className="text-xs text-gray-500 uppercase tracking-wide">Observación Clínica</label>
+                        <p className="text-sm text-gray-700 mt-1 leading-relaxed">
+                          {imagenSeleccionada.diagnostico}
+                        </p>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="text-xs text-gray-500 uppercase tracking-wide">Estado de Análisis</label>
+                      <div className="mt-1">
+                        {obtenerEstadoAnalisis(imagenSeleccionada.id) === "analizada" ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-100 text-green-700 rounded-md text-xs font-medium">
+                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                            Analizada
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 text-gray-600 rounded-md text-xs font-medium">
+                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                            </svg>
+                            Pendiente de análisis
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* BLOQUE 2: RESULTADOS IA */}
+                <div className="bg-white border-b border-gray-200 p-5 flex-1">
+                  <div className="flex items-center gap-2 mb-4">
+                    <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <h4 className="font-semibold text-gray-800 uppercase text-xs tracking-wide">Resultados IA</h4>
+                  </div>
+
+                  {(() => {
+                    const resultadoIA = obtenerResultadoIA(imagenSeleccionada.id);
+                    const estadoAnalisis = obtenerEstadoAnalisis(imagenSeleccionada.id);
+
+                    if (estadoAnalisis === "analizada" && resultadoIA) {
+                      return (
+                        <div className="space-y-4">
+                          {/* Diagnóstico IA */}
+                          {resultadoIA.diagnosticoIA && (
+                            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                              <label className="text-xs text-indigo-700 uppercase tracking-wide font-semibold">Diagnóstico Automatizado</label>
+                              <p className={`text-2xl font-bold mt-2 ${
+                                resultadoIA.diagnosticoIA === "Normal" ? "text-green-600" :
+                                resultadoIA.diagnosticoIA === "Leve" ? "text-yellow-600" :
+                                resultadoIA.diagnosticoIA === "Moderada" ? "text-orange-600" :
+                                resultadoIA.diagnosticoIA === "Avanzada" ? "text-red-600" :
+                                resultadoIA.diagnosticoIA === "Severa" ? "text-red-700" :
+                                resultadoIA.diagnosticoIA === "Terminal" ? "text-red-900" :
+                                "text-gray-600"
+                              }`}>
+                                {resultadoIA.diagnosticoIA}
+                              </p>
+                              <div className="mt-3 pt-3 border-t border-indigo-200">
+                                <label className="text-xs text-indigo-600 uppercase tracking-wide">Confianza del Modelo</label>
+                                <p className="text-lg font-semibold text-indigo-900 mt-1">
+                                  {(resultadoIA.confianzaIA * 100).toFixed(1)}%
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Detecciones */}
+                          <div>
+                            <label className="text-xs text-gray-500 uppercase tracking-wide mb-2 block">Estructuras Detectadas</label>
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                <span className="text-sm text-gray-700">Disco Óptico</span>
+                                {resultadoIA.resultados?.discoOptico ? (
+                                  <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                  </svg>
+                                ) : (
+                                  <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                  </svg>
+                                )}
+                              </div>
+                              <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                <span className="text-sm text-gray-700">Copa Óptica</span>
+                                {resultadoIA.resultados?.copaOptica ? (
+                                  <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                  </svg>
+                                ) : (
+                                  <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                  </svg>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Metadata del análisis */}
+                          <div className="pt-3 border-t border-gray-200">
+                            <label className="text-xs text-gray-500 uppercase tracking-wide">Analizado por</label>
+                            <p className="text-sm text-gray-700 mt-1">{resultadoIA.autor?.nombre || "Sistema"}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {formatearFecha(resultadoIA.fechaAnalisis)}
+                            </p>
+                          </div>
+
+                          {/* Disclaimer médico */}
+                          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                            <p className="text-xs text-amber-800 leading-relaxed">
+                              <span className="font-semibold">Nota:</span> Este diagnóstico es generado automáticamente y debe ser validado por un profesional médico.
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    } else {
+                      return (
+                        <div className="flex flex-col items-center justify-center py-8 text-center">
+                          <svg className="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                          <p className="text-sm text-gray-500 mb-1">Sin análisis IA disponible</p>
+                          <p className="text-xs text-gray-400">Procese la imagen para ver los resultados</p>
+                        </div>
+                      );
+                    }
+                  })()}
+                </div>
+
+                {/* BLOQUE 3: ACCIONES */}
+                <div className="bg-white p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <h4 className="font-semibold text-gray-800 uppercase text-xs tracking-wide">Acciones</h4>
+                  </div>
+
+                  <div className="space-y-3">
+                    {obtenerEstadoAnalisis(imagenSeleccionada.id) === "analizada" ? (
+                      <>
+                        <button
+                          onClick={() => analizarConIA(imagenSeleccionada)}
+                          disabled={cargando || guardandoAnalisis}
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
+                        >
+                          {cargando ? (
+                            <>
+                              <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Analizando...
+                            </>
+                          ) : guardandoAnalisis ? (
+                            <>
+                              <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Guardando...
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                              Re-analizar con IA
+                            </>
+                          )}
+                        </button>
+                        <p className="text-xs text-center text-gray-500">
+                          Generar un nuevo análisis de esta imagen
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => analizarConIA(imagenSeleccionada)}
+                          disabled={cargando || guardandoAnalisis}
+                          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 px-4 rounded-lg font-medium transition disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md"
+                        >
+                          {cargando ? (
+                            <>
+                              <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Procesando...
+                            </>
+                          ) : guardandoAnalisis ? (
+                            <>
+                              <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Guardando...
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                              </svg>
+                              Analizar con IA
+                            </>
+                          )}
+                        </button>
+                        <p className="text-xs text-center text-gray-500">
+                          Procesar imagen con modelo de segmentación
+                        </p>
+                      </>
+                    )}
+
+                    <button
+                      onClick={cerrarModal}
+                      className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 px-4 rounded-lg font-medium transition"
+                    >
+                      Cerrar
+                    </button>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
