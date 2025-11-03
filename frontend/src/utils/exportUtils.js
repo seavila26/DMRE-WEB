@@ -744,14 +744,49 @@ export async function exportarAnalisisComparativoPDFCaptura(elementoModal, anali
       }
     });
 
+    // SOLUCIÓN CORS: Convertir todas las imágenes a Data URLs antes de capturar
+    // Esto evita que html2canvas tenga que hacer peticiones cross-origin a Firebase
+    const imagenes = clonModal.querySelectorAll('img');
+    const promesasImagenes = Array.from(imagenes).map(async (img) => {
+      try {
+        // Si ya es un data URL, no hacer nada
+        if (img.src.startsWith('data:')) {
+          return;
+        }
+
+        // Cargar la imagen como blob (esto funciona porque el navegador ya tiene acceso)
+        const response = await fetch(img.src);
+        const blob = await response.blob();
+
+        // Convertir blob a data URL
+        const dataUrl = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(blob);
+        });
+
+        // Reemplazar src con data URL
+        img.src = dataUrl;
+      } catch (error) {
+        console.warn('No se pudo convertir imagen a data URL:', img.src, error);
+        // Si falla, la imagen simplemente no aparecerá en el PDF
+      }
+    });
+
+    // Esperar a que todas las imágenes se conviertan
+    await Promise.all(promesasImagenes);
+
+    // Pequeña espera para asegurar que las imágenes se rendericen
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     // Capturar el clon como imagen usando html2canvas
     const canvas = await html2canvas(clonModal, {
       scale: 2, // Mayor calidad
-      useCORS: true, // Permitir imágenes de otros dominios
+      useCORS: true, // Ya no necesario, pero lo dejamos por seguridad
       logging: false, // No mostrar logs en consola
       backgroundColor: '#ffffff',
       imageTimeout: 0, // Sin timeout para las imágenes
-      allowTaint: true, // Permitir imágenes con CORS
+      allowTaint: true, // Permitir imágenes "tainted" (data URLs)
       ignoreElements: (element) => {
         // Ignorar botones de cerrar y otros elementos que no queremos en el PDF
         return element.tagName === 'BUTTON' && element.textContent.includes('Cerrar');
