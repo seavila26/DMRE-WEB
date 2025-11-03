@@ -350,18 +350,31 @@ export default function AnalisisIA({ imagenes, pacienteNombre }) {
               ))}
             </div>
           ) : (
-            <div className="bg-white rounded-xl shadow-md p-12 text-center">
-              <div className="text-6xl mb-4">📭</div>
-              <h4 className="text-xl font-semibold text-gray-700 mb-2">
+            <div className="bg-white rounded-xl shadow-lg p-16 text-center">
+              <div className="text-8xl mb-6 opacity-50">
+                {analisisIA && analisisIA.length > 0 ? "🔍" : "🤖"}
+              </div>
+              <h4 className="text-2xl font-bold text-gray-800 mb-3">
                 {analisisIA && analisisIA.length > 0
                   ? "No hay análisis que coincidan con los filtros"
-                  : "No hay análisis previos"}
+                  : "No hay análisis de IA todavía"}
               </h4>
-              <p className="text-gray-500">
+              <p className="text-gray-600 mb-6 max-w-md mx-auto">
                 {analisisIA && analisisIA.length > 0
-                  ? "Intenta cambiar los filtros para ver más resultados."
-                  : "Los análisis procesados con IA aparecerán aquí automáticamente."}
+                  ? "Intenta cambiar los filtros para ver más resultados o limpia los filtros para ver todos los análisis."
+                  : "Los análisis procesados con IA aparecerán aquí automáticamente cuando subas y proceses imágenes de fondo de ojo en la sección de Visitas."}
               </p>
+              {analisisIA && analisisIA.length > 0 && (
+                <button
+                  onClick={() => {
+                    setFiltroOjo("todos");
+                    setFiltroFecha("todos");
+                  }}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-md hover:scale-105"
+                >
+                  Limpiar Filtros
+                </button>
+              )}
             </div>
           )}
         </div>

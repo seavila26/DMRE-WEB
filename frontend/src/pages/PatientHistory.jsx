@@ -102,7 +102,19 @@ setImagenesCombinadas({ derecho, izquierdo });
     }
   };
 
-  if (cargando) return <p className="p-6">⏳ Cargando historial...</p>;
+  if (cargando) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[url('/bg-11111.png')]">
+        <div className="bg-white rounded-2xl shadow-2xl p-12 text-center">
+          <div className="flex justify-center mb-6">
+            <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+          </div>
+          <h3 className="text-xl font-bold text-gray-800 mb-2">Cargando historial del paciente</h3>
+          <p className="text-gray-600">Por favor espera un momento...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[url('/bg-11111.png')]">
