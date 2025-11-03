@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { exportarAnalisisComparativoPDF } from "../utils/exportUtils";
+import { useState, useRef } from "react";
+import { exportarAnalisisComparativoPDFCaptura } from "../utils/exportUtils";
 
 export default function AnalisisIA({ imagenes, pacienteNombre }) {
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -7,6 +7,7 @@ export default function AnalisisIA({ imagenes, pacienteNombre }) {
   const [filtroOjo, setFiltroOjo] = useState("todos");
   const [filtroFecha, setFiltroFecha] = useState("todos");
   const [descargandoPDF, setDescargandoPDF] = useState(false);
+  const modalContentRef = useRef(null);
 
   // Filtrar análisis IA y vincularlos con sus imágenes originales
   const analisisIA = imagenes
@@ -94,11 +95,20 @@ export default function AnalisisIA({ imagenes, pacienteNombre }) {
     });
   };
 
-  // Descargar PDF del análisis comparativo
+  // Descargar PDF del análisis comparativo (captura de pantalla del modal)
   const handleDescargarPDF = async () => {
+    if (!modalContentRef.current) {
+      alert("❌ Error: No se pudo capturar el contenido del modal");
+      return;
+    }
+
     try {
       setDescargandoPDF(true);
-      await exportarAnalisisComparativoPDF(analisisSeleccionado, pacienteNombre || "Paciente");
+      await exportarAnalisisComparativoPDFCaptura(
+        modalContentRef.current,
+        analisisSeleccionado.ojo,
+        pacienteNombre || "Paciente"
+      );
       alert("✅ PDF generado y descargado correctamente");
     } catch (error) {
       console.error("Error descargando PDF:", error);
@@ -347,7 +357,7 @@ export default function AnalisisIA({ imagenes, pacienteNombre }) {
         {/* ========================================= */}
         {modalAbierto && analisisSeleccionado && (
           <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div ref={modalContentRef} className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
               {/* Header del modal */}
               <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-2xl">
                 <div className="flex items-center justify-between">

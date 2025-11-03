@@ -1,6 +1,7 @@
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import html2canvas from "html2canvas";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 
@@ -608,6 +609,88 @@ export async function exportarAnalisisComparativoPDF(analisis, pacienteNombre = 
     // Guardar PDF
     const nombreArchivo = `Analisis_Comparativo_${analisis.ojo}_${new Date().toISOString().split('T')[0]}.pdf`;
     doc.save(nombreArchivo);
+
+    return nombreArchivo;
+  } catch (error) {
+    console.error("Error generando PDF del análisis comparativo:", error);
+    throw error;
+  }
+}
+
+/**
+ * Exportar análisis comparativo a PDF usando captura de pantalla del modal
+ * Esta función es más simple y garantiza que todo se vea exactamente como en pantalla
+ */
+export async function exportarAnalisisComparativoPDFCaptura(elementoModal, analisisOjo, pacienteNombre = "Paciente") {
+  try {
+    // Capturar el modal como imagen usando html2canvas
+    const canvas = await html2canvas(elementoModal, {
+      scale: 2, // Mayor calidad
+      useCORS: true, // Permitir imágenes de otros dominios
+      logging: false, // No mostrar logs en consola
+      backgroundColor: '#ffffff',
+      imageTimeout: 0, // Sin timeout para las imágenes
+      allowTaint: true // Permitir imágenes con CORS
+    });
+
+    // Crear PDF
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    // Obtener dimensiones del PDF
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+
+    // Calcular dimensiones de la imagen para que quepa en el PDF
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+    const ratio = canvasWidth / canvasHeight;
+
+    let imgWidth = pdfWidth - 20; // Margen de 10mm a cada lado
+    let imgHeight = imgWidth / ratio;
+
+    // Si la imagen es muy alta, dividir en múltiples páginas
+    const maxHeightPerPage = pdfHeight - 20; // Margen de 10mm arriba y abajo
+    let heightLeft = imgHeight;
+    let position = 10; // Margen superior
+
+    // Convertir canvas a imagen
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+
+    // Agregar imagen al PDF (puede requerir múltiples páginas)
+    while (heightLeft > 0) {
+      const pageHeight = Math.min(heightLeft, maxHeightPerPage);
+
+      pdf.addImage(imgData, 'JPEG', 10, position, imgWidth, imgHeight);
+
+      heightLeft -= maxHeightPerPage;
+
+      if (heightLeft > 0) {
+        pdf.addPage();
+        position = 10 - (imgHeight - heightLeft); // Ajustar posición para continuar la imagen
+      }
+    }
+
+    // Agregar información en el pie de página de todas las páginas
+    const totalPages = pdf.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      pdf.setPage(i);
+      pdf.setFontSize(8);
+      pdf.setTextColor(100);
+      pdf.text(
+        `Análisis Comparativo - ${pacienteNombre} | Página ${i} de ${totalPages}`,
+        pdfWidth / 2,
+        pdfHeight - 5,
+        { align: 'center' }
+      );
+    }
+
+    // Guardar PDF
+    const nombreArchivo = `Analisis_Comparativo_${analisisOjo}_${new Date().toISOString().split('T')[0]}.pdf`;
+    pdf.save(nombreArchivo);
 
     return nombreArchivo;
   } catch (error) {
