@@ -108,40 +108,81 @@ setImagenesCombinadas({ derecho, izquierdo });
     <div className="min-h-screen bg-[url('/bg-11111.png')]">
       <div className="max-w-6xl mx-auto px-4 py-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <button onClick={() => navigate("/dashboard")} className="flex items-center gap-2 text-blue-700 font-semibold hover:underline">
+        <div className="mb-6">
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="flex items-center gap-2 text-blue-700 font-semibold hover:underline mb-4"
+          >
             <span className="text-lg">←</span> Volver al Dashboard
           </button>
 
-          <div className="flex-1 flex justify-center">
-            {paciente && (
-              <div className="text-center">
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-800">{paciente.nombre}</h1>
-                <p className="text-sm text-gray-500">{paciente.identificacion} • {paciente.edad} años</p>
-              </div>
-            )}
-          </div>
-
           {paciente && (
-            <div className="flex gap-2">
-              <button
-                onClick={handleExportarExcel}
-                disabled={exportando}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Exportar a Excel"
-              >
-                <ArrowDownTrayIcon className="h-5 w-5" />
-                <span className="hidden sm:inline">Excel</span>
-              </button>
-              <button
-                onClick={handleExportarTXT}
-                disabled={exportando}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Exportar a TXT"
-              >
-                <ArrowDownTrayIcon className="h-5 w-5" />
-                <span className="hidden sm:inline">TXT</span>
-              </button>
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                {/* Avatar con iniciales */}
+                <div className="flex-shrink-0">
+                  <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">
+                    {paciente.nombre
+                      .split(" ")
+                      .map((n) => n[0])
+                      .slice(0, 2)
+                      .join("")
+                      .toUpperCase()}
+                  </div>
+                </div>
+
+                {/* Información del paciente */}
+                <div className="flex-1 text-center md:text-left">
+                  <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
+                    {paciente.nombre}
+                  </h1>
+                  <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                      📋 {paciente.identificacion}
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                      👤 {paciente.edad} años
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                      📊 {visitas.length} {visitas.length === 1 ? "visita" : "visitas"}
+                    </span>
+                    {imagenesCombinadas.derecho.filter(i => i.tipo === "analisis_ia").length +
+                      imagenesCombinadas.izquierdo.filter(i => i.tipo === "analisis_ia").length >
+                      0 && (
+                      <span className="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-medium">
+                        🤖{" "}
+                        {imagenesCombinadas.derecho.filter((i) => i.tipo === "analisis_ia")
+                          .length +
+                          imagenesCombinadas.izquierdo.filter((i) => i.tipo === "analisis_ia")
+                            .length}{" "}
+                        análisis IA
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Botones de exportación */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleExportarExcel}
+                    disabled={exportando}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition shadow-md hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Exportar a Excel"
+                  >
+                    <ArrowDownTrayIcon className="h-5 w-5" />
+                    <span className="hidden sm:inline">Excel</span>
+                  </button>
+                  <button
+                    onClick={handleExportarTXT}
+                    disabled={exportando}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Exportar a TXT"
+                  >
+                    <ArrowDownTrayIcon className="h-5 w-5" />
+                    <span className="hidden sm:inline">TXT</span>
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
