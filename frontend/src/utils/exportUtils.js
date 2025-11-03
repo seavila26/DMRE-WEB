@@ -623,6 +623,22 @@ export async function exportarAnalisisComparativoPDF(analisis, pacienteNombre = 
  */
 export async function exportarAnalisisComparativoPDFCaptura(elementoModal, analisisOjo, pacienteNombre = "Paciente") {
   try {
+    // Encontrar elementos con gradientes que usan oklch (Tailwind v4)
+    // y reemplazarlos temporalmente con colores sólidos para html2canvas
+    const gradientElements = elementoModal.querySelectorAll('[class*="gradient"]');
+    const originalStyles = new Map();
+
+    // Guardar estilos originales y aplicar colores sólidos
+    gradientElements.forEach((element) => {
+      originalStyles.set(element, element.style.cssText);
+
+      // Detectar si es un gradiente azul-púrpura (header del modal)
+      if (element.classList.contains('bg-gradient-to-r')) {
+        element.style.background = '#2563eb'; // Azul sólido
+        element.style.backgroundImage = 'none';
+      }
+    });
+
     // Capturar el modal como imagen usando html2canvas
     const canvas = await html2canvas(elementoModal, {
       scale: 2, // Mayor calidad
@@ -630,7 +646,16 @@ export async function exportarAnalisisComparativoPDFCaptura(elementoModal, anali
       logging: false, // No mostrar logs en consola
       backgroundColor: '#ffffff',
       imageTimeout: 0, // Sin timeout para las imágenes
-      allowTaint: true // Permitir imágenes con CORS
+      allowTaint: true, // Permitir imágenes con CORS
+      ignoreElements: (element) => {
+        // Ignorar botones de cerrar y otros elementos que no queremos en el PDF
+        return element.tagName === 'BUTTON' && element.textContent.includes('Cerrar');
+      }
+    });
+
+    // Restaurar estilos originales
+    gradientElements.forEach((element) => {
+      element.style.cssText = originalStyles.get(element);
     });
 
     // Crear PDF
