@@ -3,12 +3,14 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { db } from "../firebase";
 import { doc, getDoc, collection, getDocs, collectionGroup, query, where, orderBy } from "firebase/firestore";
+import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 
 import PatientProfile from "../components/PatientProfile";
 import EyeImagesGallery from "../components/EyeImagesGallery";
 import VisitList from "../components/VisitList";
 import NuevaVisita from "../components/NuevaVisita";
 import AnalisisIA from "../components/AnalisisIA";
+import { exportarPacienteExcel, exportarPacienteTXT } from "../utils/exportUtils";
 
 export default function PatientHistory() {
   const { id } = useParams();
@@ -20,6 +22,7 @@ export default function PatientHistory() {
   const [cargando, setCargando] = useState(true);
   const [nuevaVisita, setNuevaVisita] = useState(false);
   const [tab, setTab] = useState("perfil");
+  const [exportando, setExportando] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -73,6 +76,32 @@ setImagenesCombinadas({ derecho, izquierdo });
     fetchData();
   }, [id]);
 
+  const handleExportarExcel = async () => {
+    try {
+      setExportando(true);
+      await exportarPacienteExcel(id, paciente);
+      alert("✅ Datos exportados a Excel correctamente");
+    } catch (error) {
+      console.error("Error exportando a Excel:", error);
+      alert("❌ Error al exportar datos a Excel");
+    } finally {
+      setExportando(false);
+    }
+  };
+
+  const handleExportarTXT = async () => {
+    try {
+      setExportando(true);
+      await exportarPacienteTXT(id, paciente);
+      alert("✅ Datos exportados a TXT correctamente");
+    } catch (error) {
+      console.error("Error exportando a TXT:", error);
+      alert("❌ Error al exportar datos a TXT");
+    } finally {
+      setExportando(false);
+    }
+  };
+
   if (cargando) return <p className="p-6">⏳ Cargando historial...</p>;
 
   return (
@@ -83,10 +112,36 @@ setImagenesCombinadas({ derecho, izquierdo });
           <button onClick={() => navigate("/dashboard")} className="flex items-center gap-2 text-blue-700 font-semibold hover:underline">
             <span className="text-lg">←</span> Volver al Dashboard
           </button>
+
+          <div className="flex-1 flex justify-center">
+            {paciente && (
+              <div className="text-center">
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-800">{paciente.nombre}</h1>
+                <p className="text-sm text-gray-500">{paciente.identificacion} • {paciente.edad} años</p>
+              </div>
+            )}
+          </div>
+
           {paciente && (
-            <div className="text-right">
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-800">{paciente.nombre}</h1>
-              <p className="text-sm text-gray-500">{paciente.identificacion} • {paciente.edad} años</p>
+            <div className="flex gap-2">
+              <button
+                onClick={handleExportarExcel}
+                disabled={exportando}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Exportar a Excel"
+              >
+                <ArrowDownTrayIcon className="h-5 w-5" />
+                <span className="hidden sm:inline">Excel</span>
+              </button>
+              <button
+                onClick={handleExportarTXT}
+                disabled={exportando}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Exportar a TXT"
+              >
+                <ArrowDownTrayIcon className="h-5 w-5" />
+                <span className="hidden sm:inline">TXT</span>
+              </button>
             </div>
           )}
         </div>

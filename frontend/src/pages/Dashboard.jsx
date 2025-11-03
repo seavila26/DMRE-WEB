@@ -5,7 +5,8 @@ import { collection, getDocs, query, where, collectionGroup } from "firebase/fir
 import { logoutMedico } from "../auth";
 import { useAuth } from "../context/AuthContext";
 import Sidebar from "../components/Sidebar";
-import {UserGroupIcon, ClipboardDocumentListIcon, CpuChipIcon} from "@heroicons/react/24/outline";
+import {UserGroupIcon, ClipboardDocumentListIcon, CpuChipIcon, ArrowDownTrayIcon} from "@heroicons/react/24/outline";
+import { exportarTodosPacientesExcel } from "../utils/exportUtils";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -78,6 +79,16 @@ export default function Dashboard() {
     navigate("/");
   };
 
+  const handleExportarPacientes = async () => {
+    try {
+      await exportarTodosPacientesExcel(pacientes);
+      alert("✅ Lista de pacientes exportada correctamente");
+    } catch (error) {
+      console.error("Error exportando pacientes:", error);
+      alert("❌ Error al exportar la lista de pacientes");
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-[url('/bg-1111111.png')]">
       <Sidebar />
@@ -116,7 +127,18 @@ export default function Dashboard() {
 
           {/* Lista de pacientes */}
           <section>
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Pacientes</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-gray-800">Pacientes</h2>
+              {pacientes.length > 0 && rol === "admin" && (
+                <button
+                  onClick={handleExportarPacientes}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition shadow-md"
+                >
+                  <ArrowDownTrayIcon className="h-5 w-5" />
+                  Exportar Lista (Excel)
+                </button>
+              )}
+            </div>
             {pacientes.length > 0 ? (
               <ul className="space-y-3">
                 {pacientes.map((p) => (
