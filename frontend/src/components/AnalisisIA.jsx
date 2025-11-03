@@ -254,30 +254,40 @@ export default function AnalisisIA({ imagenes, pacienteNombre }) {
               {analisisFiltrados.map((analisis) => (
                 <div
                   key={analisis.id}
-                  className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300"
+                  className={`bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] border-t-4 ${
+                    analisis.ojo === "derecho" ? "border-blue-500" : "border-green-500"
+                  }`}
                 >
                   {/* Imágenes comparativas */}
-                  <div className="grid grid-cols-2 gap-1 bg-gray-100 p-2">
-                    <div className="relative">
+                  <div className="grid grid-cols-2 gap-2 bg-gray-100 p-2">
+                    <div className="relative group">
                       <img
                         src={analisis.imagenOriginal?.url}
                         alt="Original"
                         crossOrigin="anonymous"
-                        className="w-full h-40 object-cover rounded-lg"
+                        className="w-full h-52 object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
                       />
-                      <span className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded">
+                      <span className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded shadow-lg">
                         Original
                       </span>
                     </div>
-                    <div className="relative">
+                    <div className="relative group">
                       <img
                         src={analisis.url}
                         alt="Segmentada"
                         crossOrigin="anonymous"
-                        className="w-full h-40 object-cover rounded-lg"
+                        className="w-full h-52 object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
                       />
-                      <span className="absolute top-2 left-2 bg-purple-600 text-white text-xs px-2 py-1 rounded">
+                      <span className="absolute top-2 left-2 bg-purple-600 text-white text-xs px-2 py-1 rounded shadow-lg">
                         IA
+                      </span>
+                      {/* Badge de confianza flotante */}
+                      <span className={`absolute bottom-2 right-2 text-white text-xs font-bold px-2 py-1 rounded shadow-lg ${
+                        (analisis.resultados?.confianza * 100) >= 90 ? "bg-green-600" :
+                        (analisis.resultados?.confianza * 100) >= 70 ? "bg-yellow-600" :
+                        "bg-red-600"
+                      }`}>
+                        {(analisis.resultados?.confianza * 100).toFixed(0)}%
                       </span>
                     </div>
                   </div>
@@ -285,7 +295,9 @@ export default function AnalisisIA({ imagenes, pacienteNombre }) {
                   {/* Información del análisis */}
                   <div className="p-4">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-lg font-bold text-gray-800 capitalize">
+                      <span className={`text-lg font-bold capitalize flex items-center gap-2 ${
+                        analisis.ojo === "derecho" ? "text-blue-700" : "text-green-700"
+                      }`}>
                         {analisis.ojo === "derecho" ? "👁️ Ojo Derecho" : "👁️ Ojo Izquierdo"}
                       </span>
                       <span className="bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded">
@@ -338,18 +350,31 @@ export default function AnalisisIA({ imagenes, pacienteNombre }) {
               ))}
             </div>
           ) : (
-            <div className="bg-white rounded-xl shadow-md p-12 text-center">
-              <div className="text-6xl mb-4">📭</div>
-              <h4 className="text-xl font-semibold text-gray-700 mb-2">
+            <div className="bg-white rounded-xl shadow-lg p-16 text-center">
+              <div className="text-8xl mb-6 opacity-50">
+                {analisisIA && analisisIA.length > 0 ? "🔍" : "🤖"}
+              </div>
+              <h4 className="text-2xl font-bold text-gray-800 mb-3">
                 {analisisIA && analisisIA.length > 0
                   ? "No hay análisis que coincidan con los filtros"
-                  : "No hay análisis previos"}
+                  : "No hay análisis de IA todavía"}
               </h4>
-              <p className="text-gray-500">
+              <p className="text-gray-600 mb-6 max-w-md mx-auto">
                 {analisisIA && analisisIA.length > 0
-                  ? "Intenta cambiar los filtros para ver más resultados."
-                  : "Los análisis procesados con IA aparecerán aquí automáticamente."}
+                  ? "Intenta cambiar los filtros para ver más resultados o limpia los filtros para ver todos los análisis."
+                  : "Los análisis procesados con IA aparecerán aquí automáticamente cuando subas y proceses imágenes de fondo de ojo en la sección de Visitas."}
               </p>
+              {analisisIA && analisisIA.length > 0 && (
+                <button
+                  onClick={() => {
+                    setFiltroOjo("todos");
+                    setFiltroFecha("todos");
+                  }}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-md hover:scale-105"
+                >
+                  Limpiar Filtros
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -361,24 +386,52 @@ export default function AnalisisIA({ imagenes, pacienteNombre }) {
           <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
             <div ref={modalContentRef} className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
               {/* Header del modal */}
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-2xl">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-2xl font-bold">
+              <div className={`bg-gradient-to-r ${
+                analisisSeleccionado.ojo === "derecho"
+                  ? "from-blue-600 to-blue-400"
+                  : "from-green-600 to-green-400"
+              } text-white p-6 rounded-t-2xl`}>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <h3 className="text-2xl font-bold flex items-center gap-2">
+                      {analisisSeleccionado.ojo === "derecho" ? "👁️" : "👁️"}
                       Comparación Detallada - {analisisSeleccionado.ojo === "derecho" ? "Ojo Derecho" : "Ojo Izquierdo"}
                     </h3>
-                    <p className="text-blue-100 text-sm mt-1">
+                    <p className={`text-sm mt-1 ${
+                      analisisSeleccionado.ojo === "derecho" ? "text-blue-100" : "text-green-100"
+                    }`}>
                       Análisis del {formatearFecha(analisisSeleccionado.fechaAnalisis)}
                     </p>
                   </div>
-                  <button
-                    onClick={cerrarModal}
-                    className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {/* Botón de descargar PDF en el header */}
+                    <button
+                      onClick={handleDescargarPDF}
+                      disabled={descargandoPDF}
+                      className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                      title="Descargar PDF"
+                    >
+                      {descargandoPDF ? (
+                        <>
+                          <span className="animate-spin">⏳</span>
+                          <span className="hidden md:inline">Generando...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>📥</span>
+                          <span className="hidden md:inline">Descargar PDF</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={cerrarModal}
+                      className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -410,6 +463,70 @@ export default function AnalisisIA({ imagenes, pacienteNombre }) {
                   </div>
                 </div>
 
+                {/* Separador */}
+                <div className="border-t-2 border-gray-200 my-6"></div>
+
+                {/* Diagnóstico IA - DESTACADO */}
+                {analisisSeleccionado.diagnosticoIA && (
+                  <>
+                    <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-purple-50 border-2 border-purple-300 rounded-2xl p-6 shadow-xl">
+                      <div className="text-center mb-4">
+                        <span className="text-4xl">🤖</span>
+                        <h4 className="text-2xl font-bold text-purple-900 mt-2">
+                          Diagnóstico Generado por IA
+                        </h4>
+                      </div>
+                      <div className="bg-white rounded-xl p-6 shadow-lg">
+                        <div className="text-center mb-4">
+                          <p className="text-sm text-gray-600 mb-2">Estadio Detectado</p>
+                          <p className={`text-4xl font-bold ${
+                            analisisSeleccionado.diagnosticoIA === "Normal" ? "text-green-600" :
+                            analisisSeleccionado.diagnosticoIA === "Leve" ? "text-yellow-600" :
+                            analisisSeleccionado.diagnosticoIA === "Moderada" ? "text-orange-600" :
+                            analisisSeleccionado.diagnosticoIA === "Avanzada" ? "text-red-600" :
+                            analisisSeleccionado.diagnosticoIA === "Severa" ? "text-red-700" :
+                            analisisSeleccionado.diagnosticoIA === "Terminal" ? "text-red-900" :
+                            "text-gray-600"
+                          }`}>
+                            {analisisSeleccionado.diagnosticoIA}
+                          </p>
+                        </div>
+                        <div className="mt-4">
+                          <p className="text-sm text-gray-600 mb-2">Confianza del Modelo</p>
+                          <div className="flex items-center gap-3">
+                            {/* Barra de progreso */}
+                            <div className="flex-1 bg-gray-200 rounded-full h-4 overflow-hidden">
+                              <div
+                                className={`h-full transition-all duration-500 ${
+                                  (analisisSeleccionado.confianzaIA * 100) >= 90
+                                    ? "bg-gradient-to-r from-green-500 to-green-600"
+                                    : (analisisSeleccionado.confianzaIA * 100) >= 70
+                                    ? "bg-gradient-to-r from-yellow-500 to-yellow-600"
+                                    : "bg-gradient-to-r from-red-500 to-red-600"
+                                }`}
+                                style={{ width: `${(analisisSeleccionado.confianzaIA * 100).toFixed(0)}%` }}
+                              ></div>
+                            </div>
+                            <span className={`text-xl font-bold min-w-[4rem] text-right ${
+                              (analisisSeleccionado.confianzaIA * 100) >= 90 ? "text-green-600" :
+                              (analisisSeleccionado.confianzaIA * 100) >= 70 ? "text-yellow-600" :
+                              "text-red-600"
+                            }`}>
+                              {(analisisSeleccionado.confianzaIA * 100).toFixed(1)}%
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-600 italic mt-4 text-center bg-white rounded-lg p-3">
+                        ℹ️ Este diagnóstico es generado automáticamente por el modelo de IA y debe ser validado por un profesional médico.
+                      </p>
+                    </div>
+
+                    {/* Separador */}
+                    <div className="border-t-2 border-gray-200 my-6"></div>
+                  </>
+                )}
+
                 {/* Información detallada */}
                 <div className="bg-gray-50 rounded-xl p-6">
                   <h4 className="text-xl font-bold text-gray-800 mb-4">📋 Información del Análisis</h4>
@@ -423,8 +540,29 @@ export default function AnalisisIA({ imagenes, pacienteNombre }) {
                       <p className="font-semibold text-gray-800">{analisisSeleccionado.modeloIA?.version}</p>
                     </div>
                     <div className="bg-white p-4 rounded-lg shadow">
-                      <p className="text-sm text-gray-600 mb-1">Confianza</p>
-                      <p className="font-semibold text-gray-800">{(analisisSeleccionado.resultados?.confianza * 100).toFixed(1)}%</p>
+                      <p className="text-sm text-gray-600 mb-1">Confianza de Segmentación</p>
+                      <div className="flex items-center gap-2">
+                        {/* Mini barra de progreso */}
+                        <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
+                          <div
+                            className={`h-full ${
+                              (analisisSeleccionado.resultados?.confianza * 100) >= 90
+                                ? "bg-green-600"
+                                : (analisisSeleccionado.resultados?.confianza * 100) >= 70
+                                ? "bg-yellow-600"
+                                : "bg-red-600"
+                            }`}
+                            style={{ width: `${(analisisSeleccionado.resultados?.confianza * 100).toFixed(0)}%` }}
+                          ></div>
+                        </div>
+                        <span className={`font-bold text-sm ${
+                          (analisisSeleccionado.resultados?.confianza * 100) >= 90 ? "text-green-600" :
+                          (analisisSeleccionado.resultados?.confianza * 100) >= 70 ? "text-yellow-600" :
+                          "text-red-600"
+                        }`}>
+                          {(analisisSeleccionado.resultados?.confianza * 100).toFixed(1)}%
+                        </span>
+                      </div>
                     </div>
                     <div className="bg-white p-4 rounded-lg shadow">
                       <p className="text-sm text-gray-600 mb-1">Fecha</p>
@@ -440,40 +578,8 @@ export default function AnalisisIA({ imagenes, pacienteNombre }) {
                     </div>
                   </div>
 
-                  {/* Diagnóstico IA */}
-                  {analisisSeleccionado.diagnosticoIA && (
-                    <div className="mt-6 bg-gradient-to-br from-purple-50 to-blue-50 border-l-4 border-purple-500 p-4 rounded">
-                      <h5 className="font-bold text-purple-900 mb-3 flex items-center gap-2">
-                        <span className="text-xl">🤖</span>
-                        Diagnóstico Generado por IA
-                      </h5>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="bg-white p-3 rounded-lg">
-                          <p className="text-sm text-gray-600 mb-1">Estadio detectado</p>
-                          <p className={`font-bold text-lg ${
-                            analisisSeleccionado.diagnosticoIA === "Normal" ? "text-green-600" :
-                            analisisSeleccionado.diagnosticoIA === "Leve" ? "text-yellow-600" :
-                            analisisSeleccionado.diagnosticoIA === "Moderada" ? "text-orange-600" :
-                            analisisSeleccionado.diagnosticoIA === "Avanzada" ? "text-red-600" :
-                            analisisSeleccionado.diagnosticoIA === "Severa" ? "text-red-700" :
-                            analisisSeleccionado.diagnosticoIA === "Terminal" ? "text-red-900" :
-                            "text-gray-600"
-                          }`}>
-                            {analisisSeleccionado.diagnosticoIA}
-                          </p>
-                        </div>
-                        <div className="bg-white p-3 rounded-lg">
-                          <p className="text-sm text-gray-600 mb-1">Confianza del modelo</p>
-                          <p className="font-bold text-lg text-blue-600">
-                            {(analisisSeleccionado.confianzaIA * 100).toFixed(1)}%
-                          </p>
-                        </div>
-                      </div>
-                      <p className="text-xs text-gray-500 italic mt-3">
-                        ℹ️ Este diagnóstico es generado automáticamente por el modelo de IA y debe ser validado por un profesional médico.
-                      </p>
-                    </div>
-                  )}
+                  {/* Separador */}
+                  <div className="border-t-2 border-gray-200 my-6"></div>
 
                   {/* Resultados de detección */}
                   <div className="mt-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
@@ -490,19 +596,13 @@ export default function AnalisisIA({ imagenes, pacienteNombre }) {
                 </div>
 
                 {/* Botones de acción */}
-                <div className="flex gap-4">
+                {/* Botón de cerrar */}
+                <div className="flex justify-center">
                   <button
                     onClick={cerrarModal}
-                    className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition"
+                    className="px-8 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition"
                   >
                     Cerrar
-                  </button>
-                  <button
-                    onClick={handleDescargarPDF}
-                    disabled={descargandoPDF}
-                    className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {descargandoPDF ? "⏳ Generando PDF..." : "📥 Descargar Resultado (PDF)"}
                   </button>
                 </div>
               </div>

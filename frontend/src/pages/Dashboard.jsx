@@ -109,18 +109,43 @@ export default function Dashboard() {
           {/* Resumen */}
           <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { title: "Pacientes Activos", value: pacientes.length, icon: UserGroupIcon },
-              { title: "Nuevos Casos (30 días)", value: nuevosCasos, icon: ClipboardDocumentListIcon },
-              { title: "Análisis IA Realizados", value: analisisIA, icon: CpuChipIcon },
+              {
+                title: "Pacientes Activos",
+                value: pacientes.length,
+                icon: UserGroupIcon,
+                gradient: "from-blue-50 to-blue-100",
+                iconColor: "text-blue-600",
+                valueColor: "text-blue-700",
+                borderColor: "border-t-4 border-blue-500"
+              },
+              {
+                title: "Nuevos Casos (30 días)",
+                value: nuevosCasos,
+                icon: ClipboardDocumentListIcon,
+                gradient: "from-green-50 to-green-100",
+                iconColor: "text-green-600",
+                valueColor: "text-green-700",
+                borderColor: "border-t-4 border-green-500"
+              },
+              {
+                title: "Análisis IA Realizados",
+                value: analisisIA,
+                icon: CpuChipIcon,
+                gradient: "from-purple-50 to-purple-100",
+                iconColor: "text-purple-600",
+                valueColor: "text-purple-700",
+                borderColor: "border-t-4 border-purple-500"
+              },
             ].map((card) => (
               <div
                 key={card.title}
-                className="bg-white rounded-xl shadow-md p-6 flex flex-col 
-                           items-center justify-center hover:shadow-lg transition"
+                className={`bg-gradient-to-br ${card.gradient} ${card.borderColor} rounded-xl shadow-md p-6
+                           flex flex-col items-center justify-center hover:shadow-xl hover:scale-105
+                           transition-all duration-300`}
               >
-                <card.icon className="h-10 w-10 text-blue-600 mb-3" /> {/* ← AQUÍ va el ícono */}
-                <h2 className="text-gray-500">{card.title}</h2>
-                <p className="text-3xl font-bold text-blue-600 mt-2">{card.value}</p>
+                <card.icon className={`h-14 w-14 ${card.iconColor} mb-3`} />
+                <h2 className="text-gray-600 font-medium text-center">{card.title}</h2>
+                <p className={`text-4xl font-bold ${card.valueColor} mt-2`}>{card.value}</p>
               </div>
             ))}
           </section>
@@ -144,25 +169,70 @@ export default function Dashboard() {
                 {pacientes.map((p) => (
                   <li
                     key={p.id}
-                    className="bg-white rounded-lg border shadow-sm p-4 flex 
-                               justify-between items-center hover:bg-gray-50 transition"
+                    className="bg-white rounded-lg border shadow-sm p-4 hover:shadow-md hover:border-blue-300 transition-all duration-200 cursor-pointer"
+                    onClick={() => navigate(`/historial/${p.id}`)}
                   >
-                    <div>
-                      <p className="font-semibold text-gray-800">{p.nombre}</p>
-                      <p className="text-sm text-gray-500">{p.edad} años</p>
+                    <div className="flex items-center gap-4">
+                      {/* Avatar con iniciales */}
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                        {p.nombre
+                          .split(" ")
+                          .map((n) => n[0])
+                          .slice(0, 2)
+                          .join("")
+                          .toUpperCase()}
+                      </div>
+
+                      {/* Información del paciente */}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-semibold text-gray-800">{p.nombre}</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2 items-center text-xs">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full font-medium">
+                            👤 {p.edad} años
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full font-medium">
+                            📋 {p.identificacion || "N/A"}
+                          </span>
+                          {p.fechaRegistro && (
+                            <span className="text-gray-500">
+                              Registro: {new Date(p.fechaRegistro).toLocaleDateString("es-ES")}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Flecha para indicar que es clickeable */}
+                      <div className="text-blue-600 flex-shrink-0">
+                        <svg
+                          className="w-6 h-6"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </div>
                     </div>
-                    <button
-                      onClick={() => navigate(`/historial/${p.id}`)}
-                      className="px-4 py-1.5 rounded-md bg-blue-600 text-white 
-                                 hover:bg-blue-700 transition"
-                    >
-                      Ver historial
-                    </button>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-gray-600">No hay pacientes registrados.</p>
+              <div className="bg-white rounded-xl shadow-md p-12 text-center">
+                <div className="text-8xl mb-4">👥</div>
+                <h4 className="text-xl font-semibold text-gray-700 mb-2">
+                  No hay pacientes registrados
+                </h4>
+                <p className="text-gray-500">
+                  Los pacientes aparecerán aquí cuando se registren en el sistema
+                </p>
+              </div>
             )}
           </section>
         </main>
