@@ -1,6 +1,6 @@
 import * as XLSX from "xlsx";
-import { jsPDF } from "jspdf";
-import "jspdf-autotable";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 
@@ -397,7 +397,7 @@ export async function exportarAnalisisComparativoPDF(analisis, pacienteNombre = 
       ['Confianza del Modelo', `${(analisis.resultados?.confianza * 100 || 0).toFixed(1)}%`],
     ];
 
-    doc.autoTable({
+    autoTable(doc, {
       startY: yPos,
       head: [['Campo', 'Valor']],
       body: infoGeneral,
@@ -430,7 +430,7 @@ export async function exportarAnalisisComparativoPDF(analisis, pacienteNombre = 
         ['Confianza del Diagnóstico', `${(analisis.confianzaIA * 100 || 0).toFixed(1)}%`],
       ];
 
-      doc.autoTable({
+      autoTable(doc, {
         startY: yPos,
         head: [['Campo', 'Valor']],
         body: diagnosticoInfo,
@@ -465,7 +465,7 @@ export async function exportarAnalisisComparativoPDF(analisis, pacienteNombre = 
       ['Copa Óptica', analisis.resultados?.copaOptica ? '✅ Detectada' : '❌ No detectada'],
     ];
 
-    doc.autoTable({
+    autoTable(doc, {
       startY: yPos,
       head: [['Elemento', 'Estado']],
       body: deteccionInfo,
