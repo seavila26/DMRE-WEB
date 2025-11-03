@@ -3,7 +3,8 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import html2canvas from "html2canvas";
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "../firebase";
+import { ref, getBlob } from "firebase/storage";
+import { db, storage } from "../firebase";
 
 /**
  * Recopila toda la información de un paciente desde Firestore
@@ -745,7 +746,7 @@ export async function exportarAnalisisComparativoPDFCaptura(elementoModal, anali
     });
 
     // SOLUCIÓN CORS: Convertir todas las imágenes a Data URLs antes de capturar
-    // Esto evita que html2canvas tenga que hacer peticiones cross-origin a Firebase
+    // Usar Firebase Storage SDK en lugar de fetch() para evitar problemas de CORS
     const imagenes = clonModal.querySelectorAll('img');
     const promesasImagenes = Array.from(imagenes).map(async (img) => {
       try {
@@ -754,9 +755,39 @@ export async function exportarAnalisisComparativoPDFCaptura(elementoModal, anali
           return;
         }
 
-        // Cargar la imagen como blob (esto funciona porque el navegador ya tiene acceso)
-        const response = await fetch(img.src);
-        const blob = await response.blob();
+        // Extraer la ruta del archivo desde la URL de Firebase Storage
+        // Formato: https://firebasestorage.googleapis.com/v0/b/BUCKET/o/PATH?alt=media&token=TOKEN
+        const urlObj = new URL(img.src);
+
+        // Verificar que sea una URL de Firebase Storage
+        if (!urlObj.hostname.includes('firebasestorage.googleapis.com')) {
+          console.warn('URL no es de Firebase Storage, intentando fetch normal:', img.src);
+          const response = await fetch(img.src);
+          const blob = await response.blob();
+          const dataUrl = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(blob);
+          });
+          img.src = dataUrl;
+          return;
+        }
+
+        // Extraer la ruta del archivo (entre /o/ y ?alt=media)
+        const pathMatch = urlObj.pathname.match(/\/o\/(.+)/);
+        if (!pathMatch) {
+          console.warn('No se pudo extraer la ruta del archivo de:', img.src);
+          return;
+        }
+
+        // Decodificar la ruta (está URL-encoded)
+        const filePath = decodeURIComponent(pathMatch[1]);
+
+        // Crear referencia al archivo en Firebase Storage
+        const fileRef = ref(storage, filePath);
+
+        // Descargar el blob usando Firebase Storage SDK (evita CORS)
+        const blob = await getBlob(fileRef);
 
         // Convertir blob a data URL
         const dataUrl = await new Promise((resolve) => {
