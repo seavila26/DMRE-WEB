@@ -1,4 +1,6 @@
 import * as XLSX from "xlsx";
+import { jsPDF } from "jspdf";
+import "jspdf-autotable";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 
@@ -333,6 +335,283 @@ export async function exportarTodosPacientesExcel(pacientes) {
     return nombreArchivo;
   } catch (error) {
     console.error("Error exportando todos los pacientes:", error);
+    throw error;
+  }
+}
+
+/**
+ * Exportar análisis comparativo a PDF
+ */
+export async function exportarAnalisisComparativoPDF(analisis, pacienteNombre = "Paciente") {
+  try {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    // Formatear fecha
+    const formatearFecha = (fechaISO) => {
+      const fecha = new Date(fechaISO);
+      return fecha.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    };
+
+    // Configuración de colores
+    const colorPrimario = [37, 99, 235]; // Azul
+    const colorSecundario = [147, 51, 234]; // Púrpura
+    const colorTexto = [31, 41, 55]; // Gris oscuro
+
+    // ENCABEZADO
+    doc.setFillColor(...colorPrimario);
+    doc.rect(0, 0, pageWidth, 40, 'F');
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont(undefined, 'bold');
+    doc.text('ANÁLISIS COMPARATIVO - DMRE', pageWidth / 2, 15, { align: 'center' });
+
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Segmentación de Fondo de Ojo con IA`, pageWidth / 2, 25, { align: 'center' });
+    doc.text(`Paciente: ${pacienteNombre}`, pageWidth / 2, 33, { align: 'center' });
+
+    let yPos = 50;
+
+    // INFORMACIÓN GENERAL
+    doc.setTextColor(...colorTexto);
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('📋 Información del Análisis', 15, yPos);
+    yPos += 10;
+
+    const infoGeneral = [
+      ['Ojo Analizado', analisis.ojo === "derecho" ? "Ojo Derecho 👁️" : "Ojo Izquierdo 👁️"],
+      ['Fecha de Análisis', formatearFecha(analisis.fechaAnalisis || analisis.fecha)],
+      ['Analizado por', analisis.autor?.nombre || "N/A"],
+      ['Modelo IA', analisis.modeloIA?.nombre || "Segformer"],
+      ['Versión del Modelo', analisis.modeloIA?.version || "N/A"],
+      ['Confianza del Modelo', `${(analisis.resultados?.confianza * 100 || 0).toFixed(1)}%`],
+    ];
+
+    doc.autoTable({
+      startY: yPos,
+      head: [['Campo', 'Valor']],
+      body: infoGeneral,
+      theme: 'grid',
+      headStyles: { fillColor: colorPrimario, textColor: [255, 255, 255], fontSize: 11, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 10 },
+      margin: { left: 15, right: 15 },
+    });
+
+    yPos = doc.lastAutoTable.finalY + 15;
+
+    // DIAGNÓSTICO IA (si existe)
+    if (analisis.diagnosticoIA) {
+      doc.setFontSize(14);
+      doc.setFont(undefined, 'bold');
+      doc.text('🤖 Diagnóstico Generado por IA', 15, yPos);
+      yPos += 10;
+
+      const colorDiagnostico =
+        analisis.diagnosticoIA === "Normal" ? [34, 197, 94] :
+        analisis.diagnosticoIA === "Leve" ? [234, 179, 8] :
+        analisis.diagnosticoIA === "Moderada" ? [249, 115, 22] :
+        analisis.diagnosticoIA === "Avanzada" ? [239, 68, 68] :
+        analisis.diagnosticoIA === "Severa" ? [220, 38, 38] :
+        analisis.diagnosticoIA === "Terminal" ? [153, 27, 27] :
+        [107, 114, 128];
+
+      const diagnosticoInfo = [
+        ['Estadio Detectado', analisis.diagnosticoIA],
+        ['Confianza del Diagnóstico', `${(analisis.confianzaIA * 100 || 0).toFixed(1)}%`],
+      ];
+
+      doc.autoTable({
+        startY: yPos,
+        head: [['Campo', 'Valor']],
+        body: diagnosticoInfo,
+        theme: 'grid',
+        headStyles: { fillColor: colorSecundario, textColor: [255, 255, 255], fontSize: 11, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 10 },
+        columnStyles: {
+          1: { fontStyle: 'bold', textColor: colorDiagnostico }
+        },
+        margin: { left: 15, right: 15 },
+      });
+
+      yPos = doc.lastAutoTable.finalY + 5;
+
+      // Nota informativa
+      doc.setFontSize(8);
+      doc.setFont(undefined, 'italic');
+      doc.setTextColor(107, 114, 128);
+      doc.text('ℹ️ Este diagnóstico es generado automáticamente por el modelo de IA y debe ser validado por un profesional médico.', 15, yPos);
+      yPos += 10;
+    }
+
+    // RESULTADOS DE DETECCIÓN
+    doc.setTextColor(...colorTexto);
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('🔍 Resultados de Detección', 15, yPos);
+    yPos += 10;
+
+    const deteccionInfo = [
+      ['Disco Óptico', analisis.resultados?.discoOptico ? '✅ Detectado' : '❌ No detectado'],
+      ['Copa Óptica', analisis.resultados?.copaOptica ? '✅ Detectada' : '❌ No detectada'],
+    ];
+
+    doc.autoTable({
+      startY: yPos,
+      head: [['Elemento', 'Estado']],
+      body: deteccionInfo,
+      theme: 'grid',
+      headStyles: { fillColor: [59, 130, 246], textColor: [255, 255, 255], fontSize: 11, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 10 },
+      margin: { left: 15, right: 15 },
+    });
+
+    yPos = doc.lastAutoTable.finalY + 15;
+
+    // OBSERVACIÓN CLÍNICA (si existe)
+    if (analisis.diagnostico) {
+      doc.setFontSize(14);
+      doc.setFont(undefined, 'bold');
+      doc.text('📝 Observación Clínica', 15, yPos);
+      yPos += 7;
+
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+      const observacionTexto = doc.splitTextToSize(analisis.diagnostico, pageWidth - 30);
+      doc.text(observacionTexto, 15, yPos);
+      yPos += observacionTexto.length * 5 + 10;
+    }
+
+    // NUEVA PÁGINA PARA IMÁGENES
+    doc.addPage();
+    yPos = 20;
+
+    doc.setFontSize(16);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...colorPrimario);
+    doc.text('📸 Comparación Visual', pageWidth / 2, yPos, { align: 'center' });
+    yPos += 15;
+
+    // Función para cargar y agregar imagen al PDF
+    const agregarImagenAlPDF = async (url, x, y, width, height, titulo) => {
+      try {
+        // Crear un elemento de imagen para cargar la URL
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+
+        return new Promise((resolve, reject) => {
+          img.onload = () => {
+            try {
+              // Crear canvas para convertir imagen
+              const canvas = document.createElement('canvas');
+              canvas.width = img.width;
+              canvas.height = img.height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0);
+
+              // Convertir a data URL
+              const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+
+              // Agregar al PDF
+              doc.setFontSize(12);
+              doc.setFont(undefined, 'bold');
+              doc.setTextColor(...colorTexto);
+              doc.text(titulo, x + width / 2, y - 5, { align: 'center' });
+
+              doc.addImage(dataURL, 'JPEG', x, y, width, height);
+              resolve();
+            } catch (error) {
+              console.error('Error procesando imagen:', error);
+              reject(error);
+            }
+          };
+
+          img.onerror = (error) => {
+            console.error('Error cargando imagen:', error);
+            reject(error);
+          };
+
+          img.src = url;
+        });
+      } catch (error) {
+        console.error('Error agregando imagen:', error);
+      }
+    };
+
+    // Cargar y agregar imágenes
+    const imageWidth = 80;
+    const imageHeight = 80;
+    const spacing = 10;
+    const startX = (pageWidth - (imageWidth * 2 + spacing)) / 2;
+
+    try {
+      // Imagen Original
+      if (analisis.imagenOriginal?.url) {
+        await agregarImagenAlPDF(
+          analisis.imagenOriginal.url,
+          startX,
+          yPos,
+          imageWidth,
+          imageHeight,
+          '🖼️ Imagen Original'
+        );
+      }
+
+      // Imagen con IA
+      if (analisis.url) {
+        await agregarImagenAlPDF(
+          analisis.url,
+          startX + imageWidth + spacing,
+          yPos,
+          imageWidth,
+          imageHeight,
+          '🎯 Resultado IA'
+        );
+      }
+    } catch (error) {
+      console.error('Error agregando imágenes al PDF:', error);
+      // Continuar sin imágenes si hay error
+      doc.setFontSize(10);
+      doc.setTextColor(239, 68, 68);
+      doc.text('⚠️ No se pudieron cargar las imágenes', pageWidth / 2, yPos + 40, { align: 'center' });
+    }
+
+    // PIE DE PÁGINA
+    const numPages = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= numPages; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(107, 114, 128);
+      doc.text(
+        `Sistema DMRE - Detección de Retinopatía Diabética | Página ${i} de ${numPages}`,
+        pageWidth / 2,
+        pageHeight - 10,
+        { align: 'center' }
+      );
+      doc.text(
+        `Generado el ${new Date().toLocaleDateString('es-ES')} a las ${new Date().toLocaleTimeString('es-ES')}`,
+        pageWidth / 2,
+        pageHeight - 5,
+        { align: 'center' }
+      );
+    }
+
+    // Guardar PDF
+    const nombreArchivo = `Analisis_Comparativo_${analisis.ojo}_${new Date().toISOString().split('T')[0]}.pdf`;
+    doc.save(nombreArchivo);
+
+    return nombreArchivo;
+  } catch (error) {
+    console.error("Error generando PDF del análisis comparativo:", error);
     throw error;
   }
 }

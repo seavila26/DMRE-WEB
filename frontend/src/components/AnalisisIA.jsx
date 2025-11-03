@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { exportarAnalisisComparativoPDF } from "../utils/exportUtils";
 
-export default function AnalisisIA({ imagenes }) {
+export default function AnalisisIA({ imagenes, pacienteNombre }) {
   const [modalAbierto, setModalAbierto] = useState(false);
   const [analisisSeleccionado, setAnalisisSeleccionado] = useState(null);
   const [filtroOjo, setFiltroOjo] = useState("todos");
   const [filtroFecha, setFiltroFecha] = useState("todos");
+  const [descargandoPDF, setDescargandoPDF] = useState(false);
 
   // Filtrar análisis IA y vincularlos con sus imágenes originales
   const analisisIA = imagenes
@@ -90,6 +92,20 @@ export default function AnalisisIA({ imagenes }) {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  // Descargar PDF del análisis comparativo
+  const handleDescargarPDF = async () => {
+    try {
+      setDescargandoPDF(true);
+      await exportarAnalisisComparativoPDF(analisisSeleccionado, pacienteNombre || "Paciente");
+      alert("✅ PDF generado y descargado correctamente");
+    } catch (error) {
+      console.error("Error descargando PDF:", error);
+      alert("❌ Error al generar el PDF. Por favor, intenta de nuevo.");
+    } finally {
+      setDescargandoPDF(false);
+    }
   };
 
   return (
@@ -467,13 +483,13 @@ export default function AnalisisIA({ imagenes }) {
                   >
                     Cerrar
                   </button>
-                  <a
-                    href={analisisSeleccionado.url}
-                    download
-                    className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition text-center"
+                  <button
+                    onClick={handleDescargarPDF}
+                    disabled={descargandoPDF}
+                    className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    📥 Descargar Resultado
-                  </a>
+                    {descargandoPDF ? "⏳ Generando PDF..." : "📥 Descargar Resultado (PDF)"}
+                  </button>
                 </div>
               </div>
             </div>

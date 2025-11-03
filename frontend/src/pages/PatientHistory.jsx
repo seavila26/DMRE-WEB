@@ -177,6 +177,7 @@ setImagenesCombinadas({ derecho, izquierdo });
           ...imagenesCombinadas.derecho,
           ...imagenesCombinadas.izquierdo
           ]}
+          pacienteNombre={paciente?.nombre}
           />
           )}
 
