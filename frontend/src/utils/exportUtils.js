@@ -3,8 +3,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import html2canvas from "html2canvas";
 import { collection, getDocs } from "firebase/firestore";
-import { ref, getBlob } from "firebase/storage";
-import { db, storage } from "../firebase";
+import { db } from "../firebase";
 
 /**
  * Recopila toda la información de un paciente desde Firestore
@@ -688,11 +687,55 @@ function reemplazarOklchEnEstilo(valorEstilo) {
 
 /**
  * Exportar análisis comparativo a PDF usando captura de pantalla del modal
- * Esta función es más simple y garantiza que todo se vea exactamente como en pantalla
+ * Esta función convierte las imágenes ya cargadas a data URLs para evitar CORS
  */
 export async function exportarAnalisisComparativoPDFCaptura(elementoModal, analisisOjo, pacienteNombre = "Paciente") {
   try {
-    // Clonar el modal para no afectar el original
+    // PASO 1: Convertir las imágenes del modal ORIGINAL a data URLs
+    // Las imágenes ya están cargadas en el navegador, podemos extraer sus píxeles
+    const imagenesOriginales = elementoModal.querySelectorAll('img');
+    const mapaDataUrls = new Map();
+
+    for (const imgOriginal of imagenesOriginales) {
+      try {
+        // Si ya es data URL, guardarla directamente
+        if (imgOriginal.src.startsWith('data:')) {
+          mapaDataUrls.set(imgOriginal.src, imgOriginal.src);
+          continue;
+        }
+
+        // Crear un canvas temporal para extraer los píxeles de la imagen
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Esperar a que la imagen esté completamente cargada
+        if (!imgOriginal.complete) {
+          await new Promise((resolve, reject) => {
+            imgOriginal.onload = resolve;
+            imgOriginal.onerror = reject;
+          });
+        }
+
+        // Configurar canvas con las dimensiones de la imagen
+        canvas.width = imgOriginal.naturalWidth || imgOriginal.width;
+        canvas.height = imgOriginal.naturalHeight || imgOriginal.height;
+
+        // Dibujar la imagen en el canvas (esto extrae los píxeles ya cargados)
+        ctx.drawImage(imgOriginal, 0, 0);
+
+        // Convertir canvas a data URL
+        const dataUrl = canvas.toDataURL('image/png');
+
+        // Guardar el mapeo URL original → data URL
+        mapaDataUrls.set(imgOriginal.src, dataUrl);
+      } catch (error) {
+        console.warn('No se pudo convertir imagen a data URL:', imgOriginal.src, error);
+        // Si falla, usar la URL original (puede que no aparezca en el PDF)
+        mapaDataUrls.set(imgOriginal.src, imgOriginal.src);
+      }
+    }
+
+    // PASO 2: Clonar el modal
     const clonModal = elementoModal.cloneNode(true);
 
     // Crear un contenedor temporal fuera de la vista
@@ -703,15 +746,20 @@ export async function exportarAnalisisComparativoPDFCaptura(elementoModal, anali
     document.body.appendChild(contenedorTemporal);
     contenedorTemporal.appendChild(clonModal);
 
-    // Obtener TODOS los elementos del clon (incluyendo el clon mismo)
+    // PASO 3: Reemplazar las URLs de las imágenes del clon con data URLs
+    const imagenesClonadas = clonModal.querySelectorAll('img');
+    imagenesClonadas.forEach((img) => {
+      const dataUrl = mapaDataUrls.get(img.src);
+      if (dataUrl) {
+        img.src = dataUrl;
+      }
+    });
+
+    // PASO 4: Obtener TODOS los elementos del clon y reemplazar oklch
     const todosLosElementos = [clonModal, ...clonModal.querySelectorAll('*')];
-    const estilosOriginales = new Map();
 
     // Recorrer todos los elementos y reemplazar oklch en sus estilos computados
     todosLosElementos.forEach((elemento) => {
-      // Guardar estilo original
-      estilosOriginales.set(elemento, elemento.style.cssText);
-
       // Obtener estilos computados
       const estilosComputados = window.getComputedStyle(elemento);
 
@@ -745,81 +793,19 @@ export async function exportarAnalisisComparativoPDFCaptura(elementoModal, anali
       }
     });
 
-    // SOLUCIÓN CORS: Convertir todas las imágenes a Data URLs antes de capturar
-    // Usar Firebase Storage SDK en lugar de fetch() para evitar problemas de CORS
-    const imagenes = clonModal.querySelectorAll('img');
-    const promesasImagenes = Array.from(imagenes).map(async (img) => {
-      try {
-        // Si ya es un data URL, no hacer nada
-        if (img.src.startsWith('data:')) {
-          return;
-        }
+    // PASO 5: Pequeña espera para asegurar que las imágenes se rendericen
+    await new Promise(resolve => setTimeout(resolve, 300));
 
-        // Extraer la ruta del archivo desde la URL de Firebase Storage
-        // Formato: https://firebasestorage.googleapis.com/v0/b/BUCKET/o/PATH?alt=media&token=TOKEN
-        const urlObj = new URL(img.src);
-
-        // Verificar que sea una URL de Firebase Storage
-        if (!urlObj.hostname.includes('firebasestorage.googleapis.com')) {
-          console.warn('URL no es de Firebase Storage, intentando fetch normal:', img.src);
-          const response = await fetch(img.src);
-          const blob = await response.blob();
-          const dataUrl = await new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.readAsDataURL(blob);
-          });
-          img.src = dataUrl;
-          return;
-        }
-
-        // Extraer la ruta del archivo (entre /o/ y ?alt=media)
-        const pathMatch = urlObj.pathname.match(/\/o\/(.+)/);
-        if (!pathMatch) {
-          console.warn('No se pudo extraer la ruta del archivo de:', img.src);
-          return;
-        }
-
-        // Decodificar la ruta (está URL-encoded)
-        const filePath = decodeURIComponent(pathMatch[1]);
-
-        // Crear referencia al archivo en Firebase Storage
-        const fileRef = ref(storage, filePath);
-
-        // Descargar el blob usando Firebase Storage SDK (evita CORS)
-        const blob = await getBlob(fileRef);
-
-        // Convertir blob a data URL
-        const dataUrl = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.readAsDataURL(blob);
-        });
-
-        // Reemplazar src con data URL
-        img.src = dataUrl;
-      } catch (error) {
-        console.warn('No se pudo convertir imagen a data URL:', img.src, error);
-        // Si falla, la imagen simplemente no aparecerá en el PDF
-      }
-    });
-
-    // Esperar a que todas las imágenes se conviertan
-    await Promise.all(promesasImagenes);
-
-    // Pequeña espera para asegurar que las imágenes se rendericen
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Capturar el clon como imagen usando html2canvas
+    // PASO 6: Capturar el clon como imagen usando html2canvas
     const canvas = await html2canvas(clonModal, {
       scale: 2, // Mayor calidad
-      useCORS: true, // Ya no necesario, pero lo dejamos por seguridad
+      useCORS: false, // Ya no necesario, tenemos data URLs
       logging: false, // No mostrar logs en consola
       backgroundColor: '#ffffff',
-      imageTimeout: 0, // Sin timeout para las imágenes
-      allowTaint: true, // Permitir imágenes "tainted" (data URLs)
+      imageTimeout: 0, // Sin timeout
+      allowTaint: true, // Permitir data URLs
       ignoreElements: (element) => {
-        // Ignorar botones de cerrar y otros elementos que no queremos en el PDF
+        // Ignorar botones de cerrar
         return element.tagName === 'BUTTON' && element.textContent.includes('Cerrar');
       }
     });
