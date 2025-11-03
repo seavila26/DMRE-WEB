@@ -262,6 +262,7 @@ export default function AnalisisIA({ imagenes, pacienteNombre }) {
                       <img
                         src={analisis.imagenOriginal?.url}
                         alt="Original"
+                        crossOrigin="anonymous"
                         className="w-full h-40 object-cover rounded-lg"
                       />
                       <span className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded">
@@ -272,6 +273,7 @@ export default function AnalisisIA({ imagenes, pacienteNombre }) {
                       <img
                         src={analisis.url}
                         alt="Segmentada"
+                        crossOrigin="anonymous"
                         className="w-full h-40 object-cover rounded-lg"
                       />
                       <span className="absolute top-2 left-2 bg-purple-600 text-white text-xs px-2 py-1 rounded">
@@ -391,6 +393,7 @@ export default function AnalisisIA({ imagenes, pacienteNombre }) {
                     <img
                       src={analisisSeleccionado.imagenOriginal?.url}
                       alt="Original"
+                      crossOrigin="anonymous"
                       className="w-full rounded-lg shadow-lg"
                     />
                   </div>
@@ -401,6 +404,7 @@ export default function AnalisisIA({ imagenes, pacienteNombre }) {
                     <img
                       src={analisisSeleccionado.url}
                       alt="Segmentada"
+                      crossOrigin="anonymous"
                       className="w-full rounded-lg shadow-lg"
                     />
                   </div>
