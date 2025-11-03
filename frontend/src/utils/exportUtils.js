@@ -618,29 +618,134 @@ export async function exportarAnalisisComparativoPDF(analisis, pacienteNombre = 
 }
 
 /**
+ * Función auxiliar para convertir colores oklch a aproximaciones RGB
+ */
+function convertirOklchARGB(valor) {
+  // Mapeo de colores comunes de Tailwind a sus equivalentes RGB
+  const mapaColores = {
+    // Blues
+    'oklch(0.961 0.013 238.75)': '#dbeafe', // blue-100
+    'oklch(0.926 0.021 238.75)': '#bfdbfe', // blue-200
+    'oklch(0.881 0.042 238.75)': '#93c5fd', // blue-300
+    'oklch(0.705 0.122 238.75)': '#2563eb', // blue-600
+    'oklch(0.635 0.132 238.75)': '#1d4ed8', // blue-700
+    // Grays
+    'oklch(0.985 0 0)': '#f9fafb', // gray-50
+    'oklch(0.968 0 0)': '#f3f4f6', // gray-100
+    'oklch(0.922 0.001 247.85)': '#e5e7eb', // gray-200
+    'oklch(0.859 0.002 247.85)': '#d1d5db', // gray-300
+    'oklch(0.709 0.004 264.53)': '#6b7280', // gray-500
+    'oklch(0.533 0.017 265.75)': '#374151', // gray-700
+    // Greens
+    'oklch(0.962 0.018 160.19)': '#dcfce7', // green-100
+    'oklch(0.839 0.108 150.57)': '#22c55e', // green-500
+    'oklch(0.768 0.115 150.57)': '#16a34a', // green-600
+    // Reds
+    'oklch(0.971 0.013 17.38)': '#fee2e2', // red-100
+    'oklch(0.848 0.104 22.18)': '#dc2626', // red-600
+    // Oranges
+    'oklch(0.968 0.024 58.54)': '#ffedd5', // orange-100
+    'oklch(0.902 0.068 58.54)': '#fdba74', // orange-300
+  };
+
+  // Buscar en el mapa
+  for (const [oklch, rgb] of Object.entries(mapaColores)) {
+    if (valor.includes(oklch)) {
+      return rgb;
+    }
+  }
+
+  // Si no se encuentra, intentar extraer una aproximación básica
+  // oklch(L C H / A) donde L=lightness, C=chroma, H=hue
+  const match = valor.match(/oklch\(([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
+  if (match) {
+    const lightness = parseFloat(match[1]);
+    // Aproximación simple basada en lightness
+    if (lightness > 0.9) return '#f0f0f0'; // Muy claro
+    if (lightness > 0.7) return '#9ca3af'; // Gris medio
+    if (lightness > 0.5) return '#6b7280'; // Gris oscuro
+    return '#374151'; // Oscuro
+  }
+
+  // Fallback: gris medio
+  return '#9ca3af';
+}
+
+/**
+ * Función auxiliar para reemplazar oklch en una cadena de estilo
+ */
+function reemplazarOklchEnEstilo(valorEstilo) {
+  if (!valorEstilo || typeof valorEstilo !== 'string') return valorEstilo;
+
+  // Buscar todas las ocurrencias de oklch()
+  const regexOklch = /oklch\([^)]+\)/g;
+
+  return valorEstilo.replace(regexOklch, (match) => {
+    return convertirOklchARGB(match);
+  });
+}
+
+/**
  * Exportar análisis comparativo a PDF usando captura de pantalla del modal
  * Esta función es más simple y garantiza que todo se vea exactamente como en pantalla
  */
 export async function exportarAnalisisComparativoPDFCaptura(elementoModal, analisisOjo, pacienteNombre = "Paciente") {
   try {
-    // Encontrar elementos con gradientes que usan oklch (Tailwind v4)
-    // y reemplazarlos temporalmente con colores sólidos para html2canvas
-    const gradientElements = elementoModal.querySelectorAll('[class*="gradient"]');
-    const originalStyles = new Map();
+    // Clonar el modal para no afectar el original
+    const clonModal = elementoModal.cloneNode(true);
 
-    // Guardar estilos originales y aplicar colores sólidos
-    gradientElements.forEach((element) => {
-      originalStyles.set(element, element.style.cssText);
+    // Crear un contenedor temporal fuera de la vista
+    const contenedorTemporal = document.createElement('div');
+    contenedorTemporal.style.position = 'absolute';
+    contenedorTemporal.style.left = '-9999px';
+    contenedorTemporal.style.top = '0';
+    document.body.appendChild(contenedorTemporal);
+    contenedorTemporal.appendChild(clonModal);
 
-      // Detectar si es un gradiente azul-púrpura (header del modal)
-      if (element.classList.contains('bg-gradient-to-r')) {
-        element.style.background = '#2563eb'; // Azul sólido
-        element.style.backgroundImage = 'none';
+    // Obtener TODOS los elementos del clon (incluyendo el clon mismo)
+    const todosLosElementos = [clonModal, ...clonModal.querySelectorAll('*')];
+    const estilosOriginales = new Map();
+
+    // Recorrer todos los elementos y reemplazar oklch en sus estilos computados
+    todosLosElementos.forEach((elemento) => {
+      // Guardar estilo original
+      estilosOriginales.set(elemento, elemento.style.cssText);
+
+      // Obtener estilos computados
+      const estilosComputados = window.getComputedStyle(elemento);
+
+      // Propiedades que pueden contener colores oklch
+      const propiedadesColor = [
+        'color',
+        'backgroundColor',
+        'borderColor',
+        'borderTopColor',
+        'borderRightColor',
+        'borderBottomColor',
+        'borderLeftColor',
+        'outlineColor',
+        'textDecorationColor',
+        'backgroundImage' // Para gradientes
+      ];
+
+      // Reemplazar oklch en cada propiedad
+      propiedadesColor.forEach((propiedad) => {
+        const valor = estilosComputados[propiedad];
+        if (valor && valor.includes('oklch')) {
+          const valorReemplazado = reemplazarOklchEnEstilo(valor);
+          elemento.style[propiedad] = valorReemplazado;
+        }
+      });
+
+      // Manejar gradientes específicamente
+      if (elemento.classList.contains('bg-gradient-to-r')) {
+        elemento.style.background = '#2563eb';
+        elemento.style.backgroundImage = 'none';
       }
     });
 
-    // Capturar el modal como imagen usando html2canvas
-    const canvas = await html2canvas(elementoModal, {
+    // Capturar el clon como imagen usando html2canvas
+    const canvas = await html2canvas(clonModal, {
       scale: 2, // Mayor calidad
       useCORS: true, // Permitir imágenes de otros dominios
       logging: false, // No mostrar logs en consola
@@ -653,10 +758,8 @@ export async function exportarAnalisisComparativoPDFCaptura(elementoModal, anali
       }
     });
 
-    // Restaurar estilos originales
-    gradientElements.forEach((element) => {
-      element.style.cssText = originalStyles.get(element);
-    });
+    // Limpiar: eliminar el contenedor temporal
+    document.body.removeChild(contenedorTemporal);
 
     // Crear PDF
     const pdf = new jsPDF({
