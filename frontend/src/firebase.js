@@ -2,7 +2,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-import { getAuth } from "firebase/auth";
+import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -23,5 +23,16 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
+// Configurar persistencia de autenticación en LOCAL storage
+// Esto asegura que la sesión se mantenga incluso al recargar la página o cerrar el navegador
+setPersistence(auth, browserLocalPersistence)
+  .then(() => {
+    console.log("✅ Persistencia de autenticación configurada correctamente");
+  })
+  .catch((error) => {
+    console.error("❌ Error configurando persistencia:", error);
+  });
+
 export { app };
 export const secondaryAuth = getAuth(initializeApp(firebaseConfig, "Secondary"));

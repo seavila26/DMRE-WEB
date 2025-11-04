@@ -150,6 +150,40 @@ export const uploadMultipleOriginalImages = async ({
 };
 
 /**
+ * Calcula el diagnóstico IA basado en los resultados del análisis
+ * @param {Object} resultados - Resultados del análisis IA
+ * @returns {Object} - { diagnosticoIA, confianzaIA }
+ */
+const calcularDiagnosticoIA = (resultados) => {
+  const { discoOptico, copaOptica, confianza } = resultados;
+
+  // Lógica para determinar el estadio basado en los resultados
+  // NOTA: Esta es una lógica simplificada de ejemplo
+  // En un sistema real, esto debería basarse en análisis médicos más complejos
+
+  if (discoOptico && copaOptica) {
+    if (confianza >= 0.95) {
+      return { diagnosticoIA: "Normal", confianzaIA: confianza };
+    } else if (confianza >= 0.85) {
+      return { diagnosticoIA: "Leve", confianzaIA: confianza };
+    } else if (confianza >= 0.70) {
+      return { diagnosticoIA: "Moderada", confianzaIA: confianza };
+    } else if (confianza >= 0.50) {
+      return { diagnosticoIA: "Avanzada", confianzaIA: confianza };
+    } else {
+      return { diagnosticoIA: "Severa", confianzaIA: confianza };
+    }
+  } else {
+    // Si no se detectaron ambas estructuras, considerar como avanzado o severo
+    if (confianza >= 0.60) {
+      return { diagnosticoIA: "Avanzada", confianzaIA: confianza };
+    } else {
+      return { diagnosticoIA: "Severa", confianzaIA: confianza };
+    }
+  }
+};
+
+/**
  * Guarda el resultado de un análisis IA con trazabilidad completa
  * @param {Object} params
  * @param {Blob} params.imageBlob - Blob de la imagen procesada
@@ -215,7 +249,11 @@ export const saveIAAnalysisResult = async ({
     // 5. Obtener tamaño del blob
     const tamano = imageBlob.size;
 
-    // 6. Crear documento en Firestore
+    // 6. Calcular diagnóstico IA automático
+    const { diagnosticoIA, confianzaIA } = calcularDiagnosticoIA(resultados);
+    console.log("🤖 Diagnóstico IA calculado:", diagnosticoIA, "con confianza:", confianzaIA);
+
+    // 7. Crear documento en Firestore
     const analisisData = {
       tipo: "analisis_ia",
       url,
@@ -236,7 +274,9 @@ export const saveIAAnalysisResult = async ({
       imagenOriginalId,
       modeloIA,
       fechaAnalisis: new Date().toISOString(),
-      resultados
+      resultados,
+      diagnosticoIA,
+      confianzaIA
     };
 
     console.log("💾 Guardando documento en Firestore...");

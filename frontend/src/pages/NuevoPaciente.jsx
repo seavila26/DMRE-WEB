@@ -4,10 +4,12 @@ import { db, storage } from "../firebase";
 import { collection, addDoc, updateDoc, doc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import Sidebar from "../components/Sidebar";
 
 export default function NuevoPaciente() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     nombre: "", edad: "", genero: "", identificacion: "",
     direccion: "", telefono: "", antecedentes: "", diagnostico: "", notas: "",
@@ -55,6 +57,7 @@ export default function NuevoPaciente() {
         diagnostico: formData.diagnostico,
         notas: formData.notas,
         fechaRegistro: new Date().toISOString(),
+        medicoId: user?.uid || null, // Asignar médico que crea el paciente
       };
 
       const pacienteRef = await addDoc(collection(db, "pacientes"), pacienteDoc);

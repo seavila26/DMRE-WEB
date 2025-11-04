@@ -1,12 +1,72 @@
-# React + Vite
+# Sistema DMRE - Gestión de Degeneración Macular
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Sistema completo de gestión médica para Degeneración Macular Relacionada con la Edad (DMRE) con análisis de imágenes de fondo de ojo mediante inteligencia artificial.
 
-Currently, two official plugins are available:
+## 🚀 Inicio Rápido
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Ejecutar Backend (Python IA Server)
+```bash
+cd backend
+pip install -r requirements.txt
+python ia_server.py
+```
 
-## Expanding the ESLint configuration
+### Ejecutar Frontend (React App)
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Acceder
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:5001
+
+## 📁 Estructura del Proyecto
+
+```
+DMRE-WEB/
+├── frontend/          # Aplicación React + Vite
+├── backend/           # Servidor Python IA (Flask)
+└── docs/              # Documentación
+```
+
+## 📚 Documentación Completa
+
+- **[📖 Guía Completa del Proyecto](README_PROYECTO.md)** - Arquitectura, instalación, deploy
+- **[⚛️ Frontend](frontend/README.md)** - React, Firebase, configuración
+- **[🧠 Backend](backend/README.md)** - Python, Flask, modelo IA
+
+## 🛠️ Stack Tecnológico
+
+**Frontend:**
+- React 19 + Vite
+- Firebase (Auth + Firestore + Storage)
+- Tailwind CSS
+
+**Backend:**
+- Flask + PyTorch
+- Modelo: Segformer para segmentación oftalmológica
+
+## 📦 Dependencias Rápidas
+
+```bash
+# Backend
+cd backend && pip install flask flask-cors pillow torch transformers requests
+
+# Frontend
+cd frontend && npm install
+```
+
+## 🐛 Problemas Comunes
+
+**Backend no inicia:** Verificar puerto 5001 libre
+**Frontend no conecta:** Revisar URL en `VisitList.jsx`
+**Error Firebase:** Verificar credenciales en `firebase.js`
+
+Ver **[README_PROYECTO.md](README_PROYECTO.md)** para troubleshooting completo.
+
+---
+
+**Proyecto DMRE** | Análisis oftalmológico con IA
+
