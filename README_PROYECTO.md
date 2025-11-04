@@ -27,18 +27,21 @@ DMRE-WEB/
 ## 🏗️ Arquitectura
 
 ### Frontend
+
 - **Framework**: React 19.1.1 + Vite
 - **Estilos**: Tailwind CSS
 - **Backend**: Firebase (Auth + Firestore + Storage)
 - **Puerto**: 5173
 
 ### Backend
+
 - **Framework**: Flask 3.0.0
 - **IA**: PyTorch + Transformers (Segformer)
 - **Modelo**: Segmentación de disco óptico y copa óptica
 - **Puerto**: 5001
 
 ### Base de Datos
+
 - **Firestore**: Metadatos, usuarios, visitas, análisis
 - **Storage**: Imágenes originales y segmentadas
 
@@ -47,6 +50,7 @@ DMRE-WEB/
 ### 1. Instalar Dependencias
 
 **Backend (Python):**
+
 ```bash
 cd backend
 python -m venv venv
@@ -55,6 +59,7 @@ pip install -r requirements.txt
 ```
 
 **Frontend (Node.js):**
+
 ```bash
 cd frontend
 npm install
@@ -65,6 +70,7 @@ npm install
 **Opción A: Terminal separadas (Recomendado)**
 
 Terminal 1 - Backend:
+
 ```bash
 cd backend
 source venv/bin/activate  # Si no está activado
@@ -72,6 +78,7 @@ python ia_server.py
 ```
 
 Terminal 2 - Frontend:
+
 ```bash
 cd frontend
 npm run dev
@@ -115,6 +122,7 @@ Cambiar `localhost` por la IP donde corre el backend.
 Credenciales ya configuradas en `frontend/src/firebase.js`
 
 Si necesitas cambiar el proyecto Firebase:
+
 1. Crear nuevo proyecto en Firebase Console
 2. Actualizar credenciales en `frontend/src/firebase.js`
 3. Actualizar reglas en `firestore.rules` y `storage.rules`
@@ -140,6 +148,7 @@ Si necesitas cambiar el proyecto Firebase:
 Ver documentación completa en `ESTRUCTURA_DATOS.md`
 
 **Firestore:**
+
 ```
 pacientes/{patientId}
   ├── nombre, identificacion, edad, ...
@@ -155,12 +164,14 @@ pacientes/{patientId}
 ## 📦 Dependencias
 
 ### Backend (Python)
+
 - Flask 3.0.0 - Framework web
 - PyTorch 2.1.1 - Deep learning
 - Transformers 4.36.0 - Modelo pre-entrenado
 - Pillow 10.1.0 - Procesamiento de imágenes
 
 ### Frontend (Node.js)
+
 - React 19.1.1 - Framework UI
 - Firebase 11.1.0 - Backend completo
 - Tailwind CSS 3.4.17 - Estilos
@@ -169,6 +180,7 @@ pacientes/{patientId}
 ## 🧪 Testing
 
 ### Backend
+
 ```bash
 # Verificar que el servidor corre
 curl http://localhost:5001/
@@ -178,6 +190,7 @@ curl -X POST http://localhost:5001/segmentar
 ```
 
 ### Frontend
+
 ```bash
 # Ejecutar en modo desarrollo
 cd frontend && npm run dev
@@ -191,6 +204,7 @@ cd frontend && npm run build
 ### Backend no inicia
 
 **Error**: Puerto 5001 en uso
+
 ```bash
 # Linux/Mac
 sudo lsof -t -i:5001 | xargs kill -9
@@ -201,6 +215,7 @@ taskkill /PID <PID> /F
 ```
 
 **Error**: Módulo no encontrado
+
 ```bash
 cd backend
 pip install -r requirements.txt
@@ -229,6 +244,7 @@ pip install -r requirements.txt
 ## 🚢 Deploy a Producción
 
 ### Frontend (Firebase Hosting)
+
 ```bash
 cd frontend
 npm run build
@@ -238,6 +254,7 @@ firebase deploy --only hosting
 ### Backend (Servidor Python)
 
 Opciones:
+
 1. **Google Cloud Run** (Recomendado)
 2. **Heroku**
 3. **VPS con systemd**
@@ -246,6 +263,7 @@ Opciones:
 ### Docker (Opcional)
 
 Crear `backend/Dockerfile`:
+
 ```dockerfile
 FROM python:3.10-slim
 WORKDIR /app
@@ -257,6 +275,7 @@ CMD ["python", "ia_server.py"]
 ```
 
 Ejecutar:
+
 ```bash
 docker build -t dmre-backend ./backend
 docker run -p 5001:5001 dmre-backend
@@ -275,6 +294,7 @@ docker run -p 5001:5001 dmre-backend
 - CORS: Habilitado en backend para desarrollo
 
 **Para producción**, configurar CORS específico:
+
 ```python
 # backend/ia_server.py
 CORS(app, origins=["https://tu-dominio.com"])
@@ -283,6 +303,7 @@ CORS(app, origins=["https://tu-dominio.com"])
 ## 📝 Changelog
 
 ### v1.0.0 - Arquitectura Separada
+
 - ✅ Separación frontend/backend en carpetas independientes
 - ✅ Backend con servidor Flask + modelo IA
 - ✅ Frontend con React + Firebase
@@ -299,6 +320,7 @@ Proyecto privado - DMRE Clinic
 ## 🤝 Contribuir
 
 Para contribuir al proyecto:
+
 1. Crear branch desde `main`
 2. Hacer cambios y commit
 3. Push y crear Pull Request
@@ -310,4 +332,4 @@ Para problemas o preguntas, contactar al equipo de desarrollo.
 
 ---
 
-**Desarrollado con ❤️ para mejorar la atención médica oftalmológica**
+**Desarrollado con para mejorar la atención médica oftalmológica**
