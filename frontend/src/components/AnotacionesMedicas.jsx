@@ -10,6 +10,8 @@ export default function AnotacionesMedicas({ pacienteId, visitaId, analisisId })
   const [editando, setEditando] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [vistaTimeline, setVistaTimeline] = useState(false);
+  const [imagenesDisponibles, setImagenesDisponibles] = useState([]);
+  const [cargandoImagenes, setCargandoImagenes] = useState(false);
 
   // Estado del formulario
   const [formulario, setFormulario] = useState({
@@ -18,11 +20,13 @@ export default function AnotacionesMedicas({ pacienteId, visitaId, analisisId })
     recomendaciones: "",
     seguimientoRequerido: false,
     proximaRevision: "",
+    imagenesRelacionadas: [],
   });
 
   // Cargar anotaciones
   useEffect(() => {
     cargarAnotaciones();
+    cargarImagenes();
   }, [pacienteId, visitaId, analisisId]);
 
   const cargarAnotaciones = async () => {
@@ -62,8 +66,52 @@ export default function AnotacionesMedicas({ pacienteId, visitaId, analisisId })
     }
   };
 
+  const cargarImagenes = async () => {
+    try {
+      setCargandoImagenes(true);
+
+      // Cargar todas las imágenes de la visita
+      const imagenesRef = collection(db, "pacientes", pacienteId, "visitas", visitaId, "imagenes");
+      const snapshot = await getDocs(imagenesRef);
+      const imagenes = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setImagenesDisponibles(imagenes);
+    } catch (error) {
+      console.error("Error cargando imágenes:", error);
+    } finally {
+      setCargandoImagenes(false);
+    }
+  };
+
+  const toggleImagenSeleccionada = (imagenId) => {
+    setFormulario((prev) => {
+      const yaSeleccionada = prev.imagenesRelacionadas.includes(imagenId);
+
+      if (yaSeleccionada) {
+        return {
+          ...prev,
+          imagenesRelacionadas: prev.imagenesRelacionadas.filter((id) => id !== imagenId),
+        };
+      } else {
+        return {
+          ...prev,
+          imagenesRelacionadas: [...prev.imagenesRelacionadas, imagenId],
+        };
+      }
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validar que se hayan seleccionado al menos 2 imágenes
+    if (formulario.imagenesRelacionadas.length < 2) {
+      alert("⚠️ Debes seleccionar al menos 2 imágenes para crear una anotación clínica");
+      return;
+    }
 
     try {
       const anotacionData = {
@@ -115,6 +163,7 @@ export default function AnotacionesMedicas({ pacienteId, visitaId, analisisId })
         recomendaciones: "",
         seguimientoRequerido: false,
         proximaRevision: "",
+        imagenesRelacionadas: [],
       });
       setMostrarFormulario(false);
       setEditando(null);
@@ -133,6 +182,7 @@ export default function AnotacionesMedicas({ pacienteId, visitaId, analisisId })
       recomendaciones: anotacion.recomendaciones || "",
       seguimientoRequerido: anotacion.seguimientoRequerido || false,
       proximaRevision: anotacion.proximaRevision || "",
+      imagenesRelacionadas: anotacion.imagenesRelacionadas || [],
     });
     setMostrarFormulario(true);
   };
@@ -203,6 +253,7 @@ export default function AnotacionesMedicas({ pacienteId, visitaId, analisisId })
                   recomendaciones: "",
                   seguimientoRequerido: false,
                   proximaRevision: "",
+                  imagenesRelacionadas: [],
                 });
               }}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md hover:scale-105"
@@ -238,6 +289,82 @@ export default function AnotacionesMedicas({ pacienteId, visitaId, analisisId })
                 <option value="severo">Severo - Requiere intervención</option>
                 <option value="critico">Crítico - Requiere atención inmediata</option>
               </select>
+            </div>
+
+            {/* Selección de Imágenes */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Seleccionar Imágenes para Análisis * (Mínimo 2)
+              </label>
+              <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-4">
+                {cargandoImagenes ? (
+                  <div className="text-center py-4">
+                    <div className="inline-block w-6 h-6 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                    <p className="text-sm text-gray-600 mt-2">Cargando imágenes...</p>
+                  </div>
+                ) : imagenesDisponibles.length > 0 ? (
+                  <>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Seleccionadas: {formulario.imagenesRelacionadas.length} de {imagenesDisponibles.length}
+                      {formulario.imagenesRelacionadas.length < 2 && (
+                        <span className="text-red-600 font-semibold ml-2">
+                          (Debes seleccionar al menos 2 imágenes)
+                        </span>
+                      )}
+                    </p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {imagenesDisponibles.map((imagen) => {
+                        const estaSeleccionada = formulario.imagenesRelacionadas.includes(imagen.id);
+                        return (
+                          <div
+                            key={imagen.id}
+                            onClick={() => toggleImagenSeleccionada(imagen.id)}
+                            className={`relative cursor-pointer rounded-lg overflow-hidden border-4 transition-all ${
+                              estaSeleccionada
+                                ? "border-blue-500 shadow-lg scale-105"
+                                : "border-transparent hover:border-gray-300"
+                            }`}
+                          >
+                            <img
+                              src={imagen.url}
+                              alt={`${imagen.ojo} - ${imagen.tipo}`}
+                              className="w-full h-32 object-cover"
+                              crossOrigin="anonymous"
+                            />
+                            <div className={`absolute inset-0 flex items-center justify-center ${
+                              estaSeleccionada ? "bg-blue-500 bg-opacity-30" : "bg-black bg-opacity-0 hover:bg-opacity-20"
+                            } transition-all`}>
+                              {estaSeleccionada && (
+                                <div className="bg-blue-600 rounded-full p-2 shadow-lg">
+                                  <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
+                            <div className={`absolute bottom-0 left-0 right-0 p-2 ${
+                              imagen.ojo === "derecho" ? "bg-blue-600" : "bg-green-600"
+                            } bg-opacity-90`}>
+                              <p className="text-xs text-white font-bold truncate">
+                                {imagen.ojo === "derecho" ? "👁️ Derecho" : "👁️ Izquierdo"}
+                              </p>
+                              <p className="text-xs text-white opacity-90">
+                                {imagen.tipo === "analisis_ia" ? "🤖 IA" : "📸 Original"}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="text-4xl mb-2 opacity-50">🖼️</div>
+                    <p className="text-sm text-gray-600">No hay imágenes disponibles en esta visita</p>
+                    <p className="text-xs text-gray-500 mt-1">Sube imágenes primero para crear anotaciones</p>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Observaciones */}
@@ -388,6 +515,38 @@ export default function AnotacionesMedicas({ pacienteId, visitaId, analisisId })
                       </div>
                     )}
 
+                    {/* Imágenes Relacionadas */}
+                    {anotacion.imagenesRelacionadas && anotacion.imagenesRelacionadas.length > 0 && (
+                      <div>
+                        <h5 className="text-sm font-bold text-gray-700 mb-2">
+                          🖼️ Imágenes Analizadas ({anotacion.imagenesRelacionadas.length})
+                        </h5>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                          {anotacion.imagenesRelacionadas.map((imagenId) => {
+                            const imagen = imagenesDisponibles.find((img) => img.id === imagenId);
+                            if (!imagen) return null;
+                            return (
+                              <div key={imagenId} className="relative rounded-lg overflow-hidden border-2 border-gray-200 group">
+                                <img
+                                  src={imagen.url}
+                                  alt={`${imagen.ojo}`}
+                                  className="w-full h-24 object-cover"
+                                  crossOrigin="anonymous"
+                                />
+                                <div className={`absolute bottom-0 left-0 right-0 p-1 ${
+                                  imagen.ojo === "derecho" ? "bg-blue-600" : "bg-green-600"
+                                } bg-opacity-90`}>
+                                  <p className="text-xs text-white font-bold text-center">
+                                    {imagen.ojo === "derecho" ? "👁️ Der" : "👁️ Izq"}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
                     {anotacion.proximaRevision && (
                       <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mt-3">
                         <p className="text-sm font-semibold text-purple-900">
@@ -517,6 +676,38 @@ export default function AnotacionesMedicas({ pacienteId, visitaId, analisisId })
                                 Recomendaciones
                               </p>
                               <p className="text-sm text-gray-800">{anotacion.recomendaciones}</p>
+                            </div>
+                          )}
+
+                          {/* Imágenes Relacionadas */}
+                          {anotacion.imagenesRelacionadas && anotacion.imagenesRelacionadas.length > 0 && (
+                            <div>
+                              <p className="text-xs font-bold text-gray-500 uppercase mb-1">
+                                Imágenes Analizadas ({anotacion.imagenesRelacionadas.length})
+                              </p>
+                              <div className="grid grid-cols-3 gap-1.5">
+                                {anotacion.imagenesRelacionadas.map((imagenId) => {
+                                  const imagen = imagenesDisponibles.find((img) => img.id === imagenId);
+                                  if (!imagen) return null;
+                                  return (
+                                    <div key={imagenId} className="relative rounded overflow-hidden border border-gray-200">
+                                      <img
+                                        src={imagen.url}
+                                        alt={`${imagen.ojo}`}
+                                        className="w-full h-16 object-cover"
+                                        crossOrigin="anonymous"
+                                      />
+                                      <div className={`absolute bottom-0 left-0 right-0 py-0.5 ${
+                                        imagen.ojo === "derecho" ? "bg-blue-600" : "bg-green-600"
+                                      } bg-opacity-90`}>
+                                        <p className="text-xs text-white font-bold text-center">
+                                          {imagen.ojo === "derecho" ? "👁️ D" : "👁️ I"}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
                             </div>
                           )}
 
