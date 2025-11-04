@@ -9,6 +9,7 @@ export default function AnotacionesMedicas({ pacienteId, visitaId, analisisId })
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [editando, setEditando] = useState(null);
   const [cargando, setCargando] = useState(true);
+  const [vistaTimeline, setVistaTimeline] = useState(false);
 
   // Estado del formulario
   const [formulario, setFormulario] = useState({
@@ -161,29 +162,56 @@ export default function AnotacionesMedicas({ pacienteId, visitaId, analisisId })
   return (
     <div className="space-y-6">
       {/* Header con botón para agregar */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
           📝 Anotaciones Clínicas
         </h3>
-        {!mostrarFormulario && (
-          <button
-            onClick={() => {
-              setMostrarFormulario(true);
-              setEditando(null);
-              setFormulario({
-                severidad: "leve",
-                observaciones: "",
-                recomendaciones: "",
-                seguimientoRequerido: false,
-                proximaRevision: "",
-              });
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md hover:scale-105"
-          >
-            <span>➕</span>
-            <span>Nueva Anotación</span>
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          {/* Toggle de vista */}
+          {anotaciones.length > 0 && !mostrarFormulario && (
+            <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setVistaTimeline(false)}
+                className={`px-4 py-2 rounded-lg font-medium transition ${
+                  !vistaTimeline
+                    ? "bg-white text-blue-600 shadow"
+                    : "text-gray-600 hover:text-gray-800"
+                }`}
+              >
+                📋 Lista
+              </button>
+              <button
+                onClick={() => setVistaTimeline(true)}
+                className={`px-4 py-2 rounded-lg font-medium transition ${
+                  vistaTimeline
+                    ? "bg-white text-blue-600 shadow"
+                    : "text-gray-600 hover:text-gray-800"
+                }`}
+              >
+                📈 Línea de Tiempo
+              </button>
+            </div>
+          )}
+          {!mostrarFormulario && (
+            <button
+              onClick={() => {
+                setMostrarFormulario(true);
+                setEditando(null);
+                setFormulario({
+                  severidad: "leve",
+                  observaciones: "",
+                  recomendaciones: "",
+                  seguimientoRequerido: false,
+                  proximaRevision: "",
+                });
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md hover:scale-105"
+            >
+              <span>➕</span>
+              <span>Nueva Anotación</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Formulario de anotación */}
@@ -296,83 +324,223 @@ export default function AnotacionesMedicas({ pacienteId, visitaId, analisisId })
         </div>
       )}
 
-      {/* Lista de anotaciones */}
+      {/* Lista/Timeline de anotaciones */}
       {cargando ? (
         <div className="text-center py-8">
           <div className="inline-block w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
           <p className="text-gray-600 mt-2">Cargando anotaciones...</p>
         </div>
       ) : anotaciones.length > 0 ? (
-        <div className="space-y-4">
-          {anotaciones.map((anotacion) => (
-            <div
-              key={anotacion.id}
-              className={`bg-white rounded-xl shadow-md p-6 border-l-4 ${getSeveridadColor(
-                anotacion.severidad
-              )}`}
-            >
-              {/* Header de la anotación */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${getSeveridadColor(
-                        anotacion.severidad
-                      )}`}
+        <>
+          {/* Vista de Lista */}
+          {!vistaTimeline && (
+            <div className="space-y-4">
+              {anotaciones.map((anotacion) => (
+                <div
+                  key={anotacion.id}
+                  className={`bg-white rounded-xl shadow-md p-6 border-l-4 ${getSeveridadColor(
+                    anotacion.severidad
+                  )}`}
+                >
+                  {/* Header de la anotación */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${getSeveridadColor(
+                            anotacion.severidad
+                          )}`}
+                        >
+                          {anotacion.severidad}
+                        </span>
+                        {anotacion.seguimientoRequerido && (
+                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 border border-purple-300">
+                            ⏰ Seguimiento Requerido
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        <strong>Fecha:</strong> {formatearFecha(anotacion.fecha)}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        <strong>Médico:</strong> {anotacion.autor?.nombre}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleEditar(anotacion)}
+                      className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition"
                     >
-                      {anotacion.severidad}
-                    </span>
-                    {anotacion.seguimientoRequerido && (
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 border border-purple-300">
-                        ⏰ Seguimiento Requerido
-                      </span>
+                      ✏️ Editar
+                    </button>
+                  </div>
+
+                  {/* Contenido */}
+                  <div className="space-y-3">
+                    <div>
+                      <h5 className="text-sm font-bold text-gray-700 mb-1">📋 Observaciones:</h5>
+                      <p className="text-gray-800 whitespace-pre-wrap">{anotacion.observaciones}</p>
+                    </div>
+
+                    {anotacion.recomendaciones && (
+                      <div>
+                        <h5 className="text-sm font-bold text-gray-700 mb-1">💊 Recomendaciones:</h5>
+                        <p className="text-gray-800 whitespace-pre-wrap">{anotacion.recomendaciones}</p>
+                      </div>
+                    )}
+
+                    {anotacion.proximaRevision && (
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mt-3">
+                        <p className="text-sm font-semibold text-purple-900">
+                          📅 Próxima revisión sugerida:{" "}
+                          {new Date(anotacion.proximaRevision).toLocaleDateString("es-ES", {
+                            day: "2-digit",
+                            month: "long",
+                            year: "numeric",
+                          })}
+                        </p>
+                      </div>
                     )}
                   </div>
-                  <p className="text-sm text-gray-600">
-                    <strong>Fecha:</strong> {formatearFecha(anotacion.fecha)}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    <strong>Médico:</strong> {anotacion.autor?.nombre}
-                  </p>
                 </div>
-                <button
-                  onClick={() => handleEditar(anotacion)}
-                  className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition"
-                >
-                  ✏️ Editar
-                </button>
-              </div>
+              ))}
+            </div>
+          )}
 
-              {/* Contenido */}
-              <div className="space-y-3">
-                <div>
-                  <h5 className="text-sm font-bold text-gray-700 mb-1">📋 Observaciones:</h5>
-                  <p className="text-gray-800 whitespace-pre-wrap">{anotacion.observaciones}</p>
-                </div>
+          {/* Vista de Timeline */}
+          {vistaTimeline && (
+            <div className="relative">
+              {/* Línea vertical del timeline */}
+              <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-400 via-purple-400 to-pink-400"></div>
 
-                {anotacion.recomendaciones && (
-                  <div>
-                    <h5 className="text-sm font-bold text-gray-700 mb-1">💊 Recomendaciones:</h5>
-                    <p className="text-gray-800 whitespace-pre-wrap">{anotacion.recomendaciones}</p>
-                  </div>
-                )}
+              <div className="space-y-8">
+                {[...anotaciones].reverse().map((anotacion, index) => {
+                  const severidadOrder = { normal: 1, leve: 2, moderado: 3, severo: 4, critico: 5 };
+                  const prevAnotacion = index > 0 ? [...anotaciones].reverse()[index - 1] : null;
+                  let tendencia = null;
 
-                {anotacion.proximaRevision && (
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mt-3">
-                    <p className="text-sm font-semibold text-purple-900">
-                      📅 Próxima revisión sugerida:{" "}
-                      {new Date(anotacion.proximaRevision).toLocaleDateString("es-ES", {
-                        day: "2-digit",
-                        month: "long",
-                        year: "numeric",
-                      })}
-                    </p>
-                  </div>
-                )}
+                  if (prevAnotacion) {
+                    const severidadActual = severidadOrder[anotacion.severidad] || 2;
+                    const severidadAnterior = severidadOrder[prevAnotacion.severidad] || 2;
+                    if (severidadActual > severidadAnterior) tendencia = "empeorando";
+                    else if (severidadActual < severidadAnterior) tendencia = "mejorando";
+                    else tendencia = "estable";
+                  }
+
+                  return (
+                    <div key={anotacion.id} className="relative pl-20">
+                      {/* Punto en el timeline */}
+                      <div className="absolute left-0 flex items-center">
+                        <div
+                          className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg border-4 border-white ${getSeveridadColor(
+                            anotacion.severidad
+                          )}`}
+                        >
+                          <span className="text-2xl">
+                            {anotacion.severidad === "normal"
+                              ? "✅"
+                              : anotacion.severidad === "leve"
+                              ? "⚠️"
+                              : anotacion.severidad === "moderado"
+                              ? "🔶"
+                              : anotacion.severidad === "severo"
+                              ? "🔴"
+                              : "🚨"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Tarjeta de la anotación */}
+                      <div
+                        className={`bg-white rounded-xl shadow-lg p-6 border-l-4 ${getSeveridadColor(
+                          anotacion.severidad
+                        )}`}
+                      >
+                        {/* Header con tendencia */}
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2 flex-wrap">
+                              <span
+                                className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${getSeveridadColor(
+                                  anotacion.severidad
+                                )}`}
+                              >
+                                {anotacion.severidad}
+                              </span>
+                              {tendencia && (
+                                <span
+                                  className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                    tendencia === "mejorando"
+                                      ? "bg-green-100 text-green-700"
+                                      : tendencia === "empeorando"
+                                      ? "bg-red-100 text-red-700"
+                                      : "bg-gray-100 text-gray-700"
+                                  }`}
+                                >
+                                  {tendencia === "mejorando"
+                                    ? "📈 Mejorando"
+                                    : tendencia === "empeorando"
+                                    ? "📉 Empeorando"
+                                    : "➡️ Estable"}
+                                </span>
+                              )}
+                              {anotacion.seguimientoRequerido && (
+                                <span className="px-3 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700">
+                                  ⏰ Seguimiento
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-600 font-semibold">
+                              📅 {formatearFecha(anotacion.fecha)}
+                            </p>
+                            <p className="text-xs text-gray-500">👨‍⚕️ {anotacion.autor?.nombre}</p>
+                          </div>
+                          <button
+                            onClick={() => handleEditar(anotacion)}
+                            className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition"
+                          >
+                            ✏️ Editar
+                          </button>
+                        </div>
+
+                        {/* Contenido */}
+                        <div className="space-y-2">
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 uppercase mb-1">
+                              Observaciones
+                            </p>
+                            <p className="text-sm text-gray-800">{anotacion.observaciones}</p>
+                          </div>
+
+                          {anotacion.recomendaciones && (
+                            <div>
+                              <p className="text-xs font-bold text-gray-500 uppercase mb-1">
+                                Recomendaciones
+                              </p>
+                              <p className="text-sm text-gray-800">{anotacion.recomendaciones}</p>
+                            </div>
+                          )}
+
+                          {anotacion.proximaRevision && (
+                            <div className="bg-purple-50 border border-purple-200 rounded-lg p-2 mt-2">
+                              <p className="text-xs font-semibold text-purple-900">
+                                📅 Próxima revisión:{" "}
+                                {new Date(anotacion.proximaRevision).toLocaleDateString("es-ES", {
+                                  day: "2-digit",
+                                  month: "short",
+                                  year: "numeric",
+                                })}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       ) : (
         <div className="bg-white rounded-xl shadow-md p-12 text-center">
           <div className="text-8xl mb-4 opacity-50">📝</div>
