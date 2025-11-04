@@ -61,8 +61,10 @@ service cloud.firestore {
       allow read: if isOwner(userId) || isAdmin();
 
       // Crear: Solo durante registro inicial (el uid debe coincidir)
+      // Acepta tanto "email" como "correo" para compatibilidad
       allow create: if isOwner(userId) &&
-                      request.resource.data.keys().hasAll(['email', 'rol', 'fechaRegistro']);
+                      (request.resource.data.keys().hasAny(['email', 'correo'])) &&
+                      request.resource.data.keys().hasAll(['rol', 'nombre']);
 
       // Actualizar: Solo el propio usuario puede actualizar sus datos (excepto rol)
       allow update: if isOwner(userId) &&
