@@ -12,6 +12,7 @@ export default function AnotacionesMedicas({ pacienteId, visitaId, analisisId })
   const [vistaTimeline, setVistaTimeline] = useState(false);
   const [imagenesDisponibles, setImagenesDisponibles] = useState([]);
   const [cargandoImagenes, setCargandoImagenes] = useState(false);
+  const [modalImagenesAbierto, setModalImagenesAbierto] = useState(false);
 
   // Estado del formulario
   const [formulario, setFormulario] = useState({
@@ -294,77 +295,43 @@ export default function AnotacionesMedicas({ pacienteId, visitaId, analisisId })
             {/* Selección de Imágenes */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Seleccionar Imágenes para Análisis * (Mínimo 2)
+                Imágenes para Análisis * (Mínimo 2)
               </label>
-              <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-4">
-                {cargandoImagenes ? (
-                  <div className="text-center py-4">
-                    <div className="inline-block w-6 h-6 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-                    <p className="text-sm text-gray-600 mt-2">Cargando imágenes...</p>
+              <button
+                type="button"
+                onClick={() => setModalImagenesAbierto(true)}
+                className="w-full px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-dashed border-blue-300 rounded-lg hover:from-blue-100 hover:to-purple-100 transition-all flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="bg-blue-600 p-2 rounded-lg group-hover:scale-110 transition-transform">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
                   </div>
-                ) : imagenesDisponibles.length > 0 ? (
-                  <>
-                    <p className="text-sm text-gray-600 mb-3">
-                      Seleccionadas: {formulario.imagenesRelacionadas.length} de {imagenesDisponibles.length}
-                      {formulario.imagenesRelacionadas.length < 2 && (
-                        <span className="text-red-600 font-semibold ml-2">
-                          (Debes seleccionar al menos 2 imágenes)
-                        </span>
-                      )}
+                  <div className="text-left">
+                    <p className="text-sm font-semibold text-gray-800">Seleccionar Imágenes</p>
+                    <p className="text-xs text-gray-600">
+                      {formulario.imagenesRelacionadas.length > 0
+                        ? `${formulario.imagenesRelacionadas.length} imagen${formulario.imagenesRelacionadas.length > 1 ? "es" : ""} seleccionada${formulario.imagenesRelacionadas.length > 1 ? "s" : ""}`
+                        : "Haz clic para abrir la galería"}
                     </p>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                      {imagenesDisponibles.map((imagen) => {
-                        const estaSeleccionada = formulario.imagenesRelacionadas.includes(imagen.id);
-                        return (
-                          <div
-                            key={imagen.id}
-                            onClick={() => toggleImagenSeleccionada(imagen.id)}
-                            className={`relative cursor-pointer rounded-lg overflow-hidden border-4 transition-all ${
-                              estaSeleccionada
-                                ? "border-blue-500 shadow-lg scale-105"
-                                : "border-transparent hover:border-gray-300"
-                            }`}
-                          >
-                            <img
-                              src={imagen.url}
-                              alt={`${imagen.ojo} - ${imagen.tipo}`}
-                              className="w-full h-32 object-cover"
-                              crossOrigin="anonymous"
-                            />
-                            <div className={`absolute inset-0 flex items-center justify-center ${
-                              estaSeleccionada ? "bg-blue-500 bg-opacity-30" : "bg-black bg-opacity-0 hover:bg-opacity-20"
-                            } transition-all`}>
-                              {estaSeleccionada && (
-                                <div className="bg-blue-600 rounded-full p-2 shadow-lg">
-                                  <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                  </svg>
-                                </div>
-                              )}
-                            </div>
-                            <div className={`absolute bottom-0 left-0 right-0 p-2 ${
-                              imagen.ojo === "derecho" ? "bg-blue-600" : "bg-green-600"
-                            } bg-opacity-90`}>
-                              <p className="text-xs text-white font-bold truncate">
-                                {imagen.ojo === "derecho" ? "👁️ Derecho" : "👁️ Izquierdo"}
-                              </p>
-                              <p className="text-xs text-white opacity-90">
-                                {imagen.tipo === "analisis_ia" ? "🤖 IA" : "📸 Original"}
-                              </p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-center py-8">
-                    <div className="text-4xl mb-2 opacity-50">🖼️</div>
-                    <p className="text-sm text-gray-600">No hay imágenes disponibles en esta visita</p>
-                    <p className="text-xs text-gray-500 mt-1">Sube imágenes primero para crear anotaciones</p>
                   </div>
-                )}
-              </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {formulario.imagenesRelacionadas.length >= 2 ? (
+                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">
+                      ✓ Listo
+                    </span>
+                  ) : (
+                    <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold">
+                      Requerido
+                    </span>
+                  )}
+                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </button>
             </div>
 
             {/* Observaciones */}
@@ -739,6 +706,191 @@ export default function AnotacionesMedicas({ pacienteId, visitaId, analisisId })
           <p className="text-gray-600 mb-6">
             Agrega la primera anotación clínica para comenzar el seguimiento del paciente
           </p>
+        </div>
+      )}
+
+      {/* Modal de Selección de Imágenes */}
+      {modalImagenesAbierto && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Header del Modal */}
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-white bg-opacity-20 p-2 rounded-lg">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">Galería de Imágenes</h3>
+                  <p className="text-sm text-blue-100">
+                    Selecciona al menos 2 imágenes para tu anotación clínica
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setModalImagenesAbierto(false)}
+                className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg p-2 transition"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Contador */}
+            <div className="px-6 py-3 bg-gray-50 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-gray-700">
+                  Imágenes seleccionadas: {formulario.imagenesRelacionadas.length} de {imagenesDisponibles.length}
+                </p>
+                {formulario.imagenesRelacionadas.length >= 2 ? (
+                  <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    Cumple el requisito
+                  </span>
+                ) : (
+                  <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold">
+                    Mínimo 2 imágenes requeridas
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Contenido Scrollable */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {cargandoImagenes ? (
+                <div className="text-center py-12">
+                  <div className="inline-block w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                  <p className="text-gray-600 mt-4">Cargando imágenes...</p>
+                </div>
+              ) : imagenesDisponibles.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {imagenesDisponibles.map((imagen) => {
+                    const estaSeleccionada = formulario.imagenesRelacionadas.includes(imagen.id);
+                    return (
+                      <div
+                        key={imagen.id}
+                        onClick={() => toggleImagenSeleccionada(imagen.id)}
+                        className={`relative cursor-pointer rounded-xl overflow-hidden border-4 transition-all hover:shadow-xl ${
+                          estaSeleccionada
+                            ? "border-blue-500 shadow-lg scale-[1.02]"
+                            : "border-gray-200 hover:border-blue-300"
+                        }`}
+                      >
+                        {/* Imagen */}
+                        <div className="relative h-48">
+                          <img
+                            src={imagen.url}
+                            alt={`${imagen.ojo} - ${imagen.tipo}`}
+                            className="w-full h-full object-cover"
+                            crossOrigin="anonymous"
+                          />
+                          {/* Overlay de selección */}
+                          <div
+                            className={`absolute inset-0 flex items-center justify-center transition-all ${
+                              estaSeleccionada
+                                ? "bg-blue-500 bg-opacity-30"
+                                : "bg-black bg-opacity-0 hover:bg-opacity-10"
+                            }`}
+                          >
+                            {estaSeleccionada && (
+                              <div className="bg-blue-600 rounded-full p-3 shadow-lg animate-bounce">
+                                <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Información de la imagen */}
+                        <div className="p-3 bg-white">
+                          <div className="flex items-center justify-between mb-2">
+                            <span
+                              className={`px-2 py-1 rounded-lg text-xs font-bold ${
+                                imagen.ojo === "derecho"
+                                  ? "bg-blue-100 text-blue-700"
+                                  : "bg-green-100 text-green-700"
+                              }`}
+                            >
+                              {imagen.ojo === "derecho" ? "👁️ Ojo Derecho" : "👁️ Ojo Izquierdo"}
+                            </span>
+                            <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-semibold">
+                              {imagen.tipo === "analisis_ia" ? "🤖 Análisis IA" : "📸 Original"}
+                            </span>
+                          </div>
+
+                          {/* Fecha de registro */}
+                          <div className="text-xs text-gray-600 space-y-1">
+                            <p className="flex items-center gap-1">
+                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path
+                                  fillRule="evenodd"
+                                  d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                              <strong>Registrado:</strong>{" "}
+                              {imagen.fecha
+                                ? new Date(imagen.fecha).toLocaleDateString("es-ES", {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })
+                                : "N/A"}
+                            </p>
+
+                            {/* Información adicional según tipo */}
+                            {imagen.tipo === "analisis_ia" && imagen.diagnosticoIA && (
+                              <p className="flex items-center gap-1">
+                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                                <strong>Diagnóstico:</strong> {imagen.diagnosticoIA}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4 opacity-50">🖼️</div>
+                  <h4 className="text-xl font-bold text-gray-700 mb-2">No hay imágenes disponibles</h4>
+                  <p className="text-gray-600">Sube imágenes en la visita primero para crear anotaciones</p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer con botones */}
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+              <p className="text-sm text-gray-600">
+                Haz clic en las imágenes para seleccionar/deseleccionar
+              </p>
+              <button
+                onClick={() => setModalImagenesAbierto(false)}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-md"
+              >
+                Confirmar Selección
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
