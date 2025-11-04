@@ -781,7 +781,7 @@ export default function AnotacionesMedicas({ pacienteId, visitaId, analisisId })
                         }`}
                       >
                         {/* Imagen */}
-                        <div className="relative h-48">
+                        <div className="relative h-48 bg-gray-100">
                           <img
                             src={imagen.url}
                             alt={`${imagen.ojo} - ${imagen.tipo}`}
@@ -789,14 +789,8 @@ export default function AnotacionesMedicas({ pacienteId, visitaId, analisisId })
                             crossOrigin="anonymous"
                           />
                           {/* Overlay de selección */}
-                          <div
-                            className={`absolute inset-0 flex items-center justify-center transition-all ${
-                              estaSeleccionada
-                                ? "bg-blue-500 bg-opacity-30"
-                                : "bg-black bg-opacity-0 hover:bg-opacity-10"
-                            }`}
-                          >
-                            {estaSeleccionada && (
+                          {estaSeleccionada && (
+                            <div className="absolute inset-0 bg-blue-500 bg-opacity-30 flex items-center justify-center transition-all">
                               <div className="bg-blue-600 rounded-full p-3 shadow-lg animate-bounce">
                                 <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
                                   <path
@@ -806,8 +800,8 @@ export default function AnotacionesMedicas({ pacienteId, visitaId, analisisId })
                                   />
                                 </svg>
                               </div>
-                            )}
-                          </div>
+                            </div>
+                          )}
                         </div>
 
                         {/* Información de la imagen */}
