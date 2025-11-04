@@ -2,8 +2,176 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;  // 🚨 Acceso total
+
+    // ========================================
+    // FUNCIONES AUXILIARES
+    // ========================================
+
+    // Verificar si el usuario está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
     }
+
+    // Verificar si el usuario es el propietario del recurso
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Verificar si el usuario es administrador
+    function isAdmin() {
+      return isAuthenticated() &&
+             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin';
+    }
+
+    // Verificar si el usuario es médico
+    function isMedico() {
+      return isAuthenticated() &&
+             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'medico';
+    }
+
+    // Verificar campos requeridos para paciente
+    function validPacienteData() {
+      return request.resource.data.keys().hasAll(['nombre', 'edad', 'genero', 'identificacion']) &&
+             request.resource.data.nombre is string &&
+             request.resource.data.edad is number &&
+             request.resource.data.edad >= 0 &&
+             request.resource.data.edad <= 150;
+    }
+
+    // Verificar campos requeridos para visita
+    function validVisitaData() {
+      return request.resource.data.keys().hasAll(['fecha', 'pacienteId']) &&
+             request.resource.data.fecha is string;
+    }
+
+    // Verificar campos requeridos para anotación médica
+    function validAnotacionData() {
+      return request.resource.data.keys().hasAll(['severidad', 'observaciones', 'fecha', 'autor']) &&
+             request.resource.data.severidad in ['normal', 'leve', 'moderado', 'severo', 'critico'] &&
+             request.resource.data.observaciones is string &&
+             request.resource.data.observaciones.size() > 0 &&
+             request.resource.data.autor.uid == request.auth.uid;
+    }
+
+    // ========================================
+    // COLECCIÓN: USUARIOS
+    // ========================================
+    match /usuarios/{userId} {
+      // Leer: Solo el propio usuario o admin
+      allow read: if isOwner(userId) || isAdmin();
+
+      // Crear: Solo durante registro inicial (el uid debe coincidir)
+      allow create: if isOwner(userId) &&
+                      request.resource.data.keys().hasAll(['email', 'rol', 'fechaRegistro']);
+
+      // Actualizar: Solo el propio usuario puede actualizar sus datos (excepto rol)
+      allow update: if isOwner(userId) &&
+                      !request.resource.data.diff(resource.data).affectedKeys().hasAny(['rol', 'uid']);
+
+      // Eliminar: Solo admin
+      allow delete: if isAdmin();
+    }
+
+    // ========================================
+    // COLECCIÓN: PACIENTES
+    // ========================================
+    match /pacientes/{pacienteId} {
+      // Leer: Solo médicos autenticados y admin
+      allow read: if isMedico() || isAdmin();
+
+      // Crear: Solo médicos y admin, con validación de datos
+      allow create: if (isMedico() || isAdmin()) && validPacienteData();
+
+      // Actualizar: Solo médicos y admin, manteniendo estructura válida
+      allow update: if (isMedico() || isAdmin()) && validPacienteData();
+
+      // Eliminar: Solo admin
+      allow delete: if isAdmin();
+
+      // ========================================
+      // SUBCOLECCIÓN: VISITAS
+      // ========================================
+      match /visitas/{visitaId} {
+        // Leer: Solo médicos autenticados y admin
+        allow read: if isMedico() || isAdmin();
+
+        // Crear: Solo médicos y admin, con validación
+        allow create: if (isMedico() || isAdmin()) && validVisitaData();
+
+        // Actualizar: Solo médicos y admin
+        allow update: if isMedico() || isAdmin();
+
+        // Eliminar: Solo admin
+        allow delete: if isAdmin();
+
+        // ========================================
+        // SUBCOLECCIÓN: IMÁGENES
+        // ========================================
+        match /imagenes/{imagenId} {
+          // Leer: Solo médicos autenticados y admin
+          allow read: if isMedico() || isAdmin();
+
+          // Crear: Solo médicos y admin
+          allow create: if (isMedico() || isAdmin()) &&
+                          request.resource.data.keys().hasAll(['url', 'ojo', 'tipo', 'fecha']) &&
+                          request.resource.data.ojo in ['derecho', 'izquierdo'] &&
+                          request.resource.data.tipo in ['original', 'analisis_ia'];
+
+          // Actualizar: Solo médicos y admin
+          allow update: if isMedico() || isAdmin();
+
+          // Eliminar: Solo el creador o admin
+          allow delete: if isAdmin() || (isMedico() && resource.data.uploadedBy == request.auth.uid);
+        }
+
+        // ========================================
+        // SUBCOLECCIÓN: ANOTACIONES MÉDICAS
+        // ========================================
+        match /anotaciones/{anotacionId} {
+          // Leer: Solo médicos autenticados y admin
+          allow read: if isMedico() || isAdmin();
+
+          // Crear: Solo médicos y admin, con validación estricta
+          allow create: if (isMedico() || isAdmin()) &&
+                          validAnotacionData() &&
+                          request.resource.data.imagenesRelacionadas.size() >= 2;
+
+          // Actualizar: Solo el autor de la anotación o admin
+          allow update: if isAdmin() ||
+                          (isMedico() && resource.data.autor.uid == request.auth.uid);
+
+          // Eliminar: Solo el autor o admin
+          allow delete: if isAdmin() ||
+                          (isMedico() && resource.data.autor.uid == request.auth.uid);
+        }
+
+        // ========================================
+        // SUBCOLECCIÓN: ANÁLISIS (si existe)
+        // ========================================
+        match /analisis/{analisisId} {
+          // Leer: Solo médicos autenticados y admin
+          allow read: if isMedico() || isAdmin();
+
+          // Crear/Actualizar: Solo médicos y admin
+          allow create, update: if isMedico() || isAdmin();
+
+          // Eliminar: Solo admin
+          allow delete: if isAdmin();
+
+          // Anotaciones dentro de análisis
+          match /anotaciones/{anotacionId} {
+            allow read: if isMedico() || isAdmin();
+            allow create: if (isMedico() || isAdmin()) && validAnotacionData();
+            allow update: if isAdmin() || (isMedico() && resource.data.autor.uid == request.auth.uid);
+            allow delete: if isAdmin() || (isMedico() && resource.data.autor.uid == request.auth.uid);
+          }
+        }
+      }
+    }
+
+    // ========================================
+    // DENEGAR TODO LO DEMÁS
+    // ========================================
+    // Cualquier ruta no especificada explícitamente será denegada
   }
 }
