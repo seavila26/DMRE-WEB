@@ -15,6 +15,7 @@ export async function recopilarDatosPaciente(pacienteId, pacienteData) {
       visitas: [],
       imagenes: [],
       analisisIA: [],
+      anotaciones: [],
     };
 
     // Obtener todas las visitas del paciente
@@ -51,6 +52,21 @@ export async function recopilarDatosPaciente(pacienteId, pacienteData) {
         if (imagenData.tipo === "analisis_ia") {
           datos.analisisIA.push(imagen);
         }
+      }
+
+      // Obtener todas las anotaciones clínicas de cada visita
+      const anotacionesSnapshot = await getDocs(
+        collection(db, "pacientes", pacienteId, "visitas", visitaDoc.id, "anotaciones")
+      );
+
+      for (const anotacionDoc of anotacionesSnapshot.docs) {
+        const anotacionData = anotacionDoc.data();
+        datos.anotaciones.push({
+          id: anotacionDoc.id,
+          visitaId: visitaDoc.id,
+          fechaVisita: visitaData.fecha,
+          ...anotacionData,
+        });
       }
     }
 
@@ -144,7 +160,25 @@ export async function exportarPacienteExcel(pacienteId, pacienteData) {
       XLSX.utils.book_append_sheet(workbook, wsImagenes, "Imágenes");
     }
 
-    // Hoja 5: Resumen
+    // Hoja 5: Anotaciones Clínicas
+    const anotacionesData = datos.anotaciones.map((anotacion) => ({
+      "Fecha Visita": anotacion.fechaVisita ? new Date(anotacion.fechaVisita).toLocaleDateString() : "N/A",
+      "Fecha Anotación": anotacion.fecha ? new Date(anotacion.fecha).toLocaleString() : "N/A",
+      "Severidad": anotacion.severidad ? anotacion.severidad.toUpperCase() : "N/A",
+      "Observaciones": anotacion.observaciones || "N/A",
+      "Recomendaciones": anotacion.recomendaciones || "N/A",
+      "Seguimiento Requerido": anotacion.seguimientoRequerido ? "Sí" : "No",
+      "Próxima Revisión": anotacion.proximaRevision ? new Date(anotacion.proximaRevision).toLocaleDateString() : "N/A",
+      "Médico": anotacion.autor?.nombre || "N/A",
+      "Email Médico": anotacion.autor?.email || "N/A",
+    }));
+
+    if (anotacionesData.length > 0) {
+      const wsAnotaciones = XLSX.utils.json_to_sheet(anotacionesData);
+      XLSX.utils.book_append_sheet(workbook, wsAnotaciones, "Anotaciones Clínicas");
+    }
+
+    // Hoja 6: Resumen
     const resumen = [
       ["RESUMEN DEL PACIENTE"],
       [""],
@@ -156,6 +190,7 @@ export async function exportarPacienteExcel(pacienteId, pacienteData) {
         "Imágenes Originales",
         datos.imagenes.filter((img) => img.tipo === "original").length,
       ],
+      ["Anotaciones Clínicas", datos.anotaciones.length],
       [""],
       ["Fecha de Exportación", new Date().toLocaleString()],
     ];
@@ -209,9 +244,10 @@ export async function exportarPacienteTXT(pacienteId, pacienteData) {
     // Resumen
     contenido += "RESUMEN\n";
     contenido += "-".repeat(80) + "\n";
-    contenido += `Total de Visitas:        ${datos.visitas.length}\n`;
-    contenido += `Total de Imágenes:       ${datos.imagenes.length}\n`;
-    contenido += `Análisis IA Realizados:  ${datos.analisisIA.length}\n`;
+    contenido += `Total de Visitas:         ${datos.visitas.length}\n`;
+    contenido += `Total de Imágenes:        ${datos.imagenes.length}\n`;
+    contenido += `Análisis IA Realizados:   ${datos.analisisIA.length}\n`;
+    contenido += `Anotaciones Clínicas:     ${datos.anotaciones.length}\n`;
     contenido += "\n\n";
 
     // Visitas
@@ -250,6 +286,54 @@ export async function exportarPacienteTXT(pacienteId, pacienteData) {
         contenido += `  URL Imagen:             ${analisis.url || "N/A"}\n`;
         contenido += `  Observación Clínica:    ${analisis.observacionClinica || "N/A"}\n`;
         contenido += `  Estadio Enfermedad:     ${analisis.estadioEnfermedad || "N/A"}\n`;
+      });
+      contenido += "\n\n";
+    }
+
+    // Anotaciones Clínicas
+    if (datos.anotaciones.length > 0) {
+      contenido += "ANOTACIONES CLÍNICAS\n";
+      contenido += "-".repeat(80) + "\n";
+
+      // Ordenar anotaciones por fecha (más recientes primero)
+      const anotacionesOrdenadas = [...datos.anotaciones].sort((a, b) => {
+        return new Date(b.fecha) - new Date(a.fecha);
+      });
+
+      anotacionesOrdenadas.forEach((anotacion, index) => {
+        contenido += `\nAnotación ${index + 1}\n`;
+        contenido += `  Fecha:                  ${
+          anotacion.fecha ? new Date(anotacion.fecha).toLocaleString() : "N/A"
+        }\n`;
+        contenido += `  Fecha Visita:           ${
+          anotacion.fechaVisita ? new Date(anotacion.fechaVisita).toLocaleDateString() : "N/A"
+        }\n`;
+        contenido += `  Severidad:              ${
+          anotacion.severidad ? anotacion.severidad.toUpperCase() : "N/A"
+        }\n`;
+        contenido += `  Médico:                 ${anotacion.autor?.nombre || "N/A"}\n`;
+        contenido += `  Email:                  ${anotacion.autor?.email || "N/A"}\n`;
+        contenido += `\n  Observaciones Clínicas:\n`;
+        contenido += `  ${anotacion.observaciones || "N/A"}\n`;
+
+        if (anotacion.recomendaciones) {
+          contenido += `\n  Recomendaciones:\n`;
+          contenido += `  ${anotacion.recomendaciones}\n`;
+        }
+
+        contenido += `\n  Seguimiento Requerido:  ${
+          anotacion.seguimientoRequerido ? "Sí" : "No"
+        }\n`;
+
+        if (anotacion.proximaRevision) {
+          contenido += `  Próxima Revisión:       ${
+            new Date(anotacion.proximaRevision).toLocaleDateString("es-ES", {
+              day: "2-digit",
+              month: "long",
+              year: "numeric"
+            })
+          }\n`;
+        }
       });
       contenido += "\n\n";
     }

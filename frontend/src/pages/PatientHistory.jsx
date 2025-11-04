@@ -10,6 +10,7 @@ import EyeImagesGallery from "../components/EyeImagesGallery";
 import VisitList from "../components/VisitList";
 import NuevaVisita from "../components/NuevaVisita";
 import AnalisisIA from "../components/AnalisisIA";
+import AnotacionesMedicas from "../components/AnotacionesMedicas";
 import { exportarPacienteExcel, exportarPacienteTXT } from "../utils/exportUtils";
 
 export default function PatientHistory() {
@@ -200,16 +201,24 @@ setImagenesCombinadas({ derecho, izquierdo });
         </div>
 
         {/* Tabs */}
-        <div className="flex justify-center mb-8">
-          {["perfil", "imagenes", "visitas", "analisisIA"].map((item) => (
+        <div className="flex justify-center mb-8 flex-wrap">
+          {["perfil", "imagenes", "visitas", "analisisIA", "anotaciones"].map((item) => (
             <button
               key={item}
               onClick={() => setTab(item)}
-              className={`px-6 py-2 mx-1 rounded-full font-medium transition-all
+              className={`px-6 py-2 mx-1 my-1 rounded-full font-medium transition-all
                 ${tab === item ? "bg-blue-600 text-white shadow" : "bg-white border border-gray-300 text-gray-600 hover:bg-gray-100"}`}
             >
               {item === "analisisIA"
-                ? "Análisis IA"
+                ? "🤖 Análisis IA"
+                : item === "anotaciones"
+                ? "📝 Anotaciones"
+                : item === "perfil"
+                ? "👤 Perfil"
+                : item === "imagenes"
+                ? "🖼️ Imágenes"
+                : item === "visitas"
+                ? "📋 Visitas"
                 : item.charAt(0).toUpperCase() + item.slice(1)}
             </button>
           ))}
@@ -254,6 +263,34 @@ setImagenesCombinadas({ derecho, izquierdo });
                   ...imagenesCombinadas.izquierdo
                 ]}
               />
+            </div>
+          )}
+
+          {tab === "anotaciones" && (
+            <div>
+              {visitas.length > 0 ? (
+                <AnotacionesMedicas
+                  pacienteId={id}
+                  visitaId={visitas[0]?.id}
+                  analisisId={null}
+                />
+              ) : (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4 opacity-50">📝</div>
+                  <h3 className="text-xl font-bold text-gray-700 mb-2">
+                    No hay visitas registradas
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Debes registrar al menos una visita antes de agregar anotaciones clínicas
+                  </p>
+                  <button
+                    onClick={() => setTab("visitas")}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-md"
+                  >
+                    Ir a Visitas
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
