@@ -43,6 +43,18 @@ def segmentar_fondo_ojo(image):
     return Image.fromarray(overlay)
 
 # ------------------------------
+# ENDPOINT DE SALUD / HEALTH CHECK
+# ------------------------------
+@app.route("/", methods=["GET"])
+def health_check():
+    return jsonify({
+        "status": "ok",
+        "service": "DMRE IA Server",
+        "version": "2.0",
+        "endpoints": ["/segmentar", "/segmentar-url"]
+    }), 200
+
+# ------------------------------
 # ENDPOINT IA
 # ------------------------------
 @app.route("/segmentar", methods=["POST"])
@@ -93,4 +105,7 @@ def segmentar_url():
         return jsonify({"error": f"Error procesando imagen: {str(e)}"}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5001)
+    import os
+    # Puerto 7860 para Hugging Face Spaces, 5001 para desarrollo local
+    port = int(os.environ.get("PORT", 7860))
+    app.run(host="0.0.0.0", port=port)
