@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { db } from "../firebase";
 import { doc, getDoc, collection, getDocs, collectionGroup, query, where, orderBy } from "firebase/firestore";
-import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import { ArrowDownTrayIcon, UserIcon, IdentificationIcon, ChartBarIcon, PencilSquareIcon, PhotoIcon, ClipboardDocumentListIcon, CpuChipIcon } from "@heroicons/react/24/outline";
 
 import PatientProfile from "../components/PatientProfile";
 import EyeImagesGallery from "../components/EyeImagesGallery";
@@ -151,19 +151,23 @@ setImagenesCombinadas({ derecho, izquierdo });
                   </h1>
                   <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                     <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-                      📋 {paciente.identificacion}
+                      <IdentificationIcon className="h-4 w-4" />
+                      {paciente.identificacion}
                     </span>
                     <span className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
-                      👤 {paciente.edad} años
+                      <UserIcon className="h-4 w-4" />
+                      {paciente.edad} años
                     </span>
                     <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                      📊 {visitas.length} {visitas.length === 1 ? "visita" : "visitas"}
+                      <ChartBarIcon className="h-4 w-4" />
+                      {visitas.length} {visitas.length === 1 ? "visita" : "visitas"}
                     </span>
                     {imagenesCombinadas.derecho.filter(i => i.tipo === "analisis_ia").length +
                       imagenesCombinadas.izquierdo.filter(i => i.tipo === "analisis_ia").length >
                       0 && (
                       <span className="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-medium">
-                        🤖{" "}
+                        <CpuChipIcon className="h-4 w-4" />
+                        {" "}
                         {imagenesCombinadas.derecho.filter((i) => i.tipo === "analisis_ia")
                           .length +
                           imagenesCombinadas.izquierdo.filter((i) => i.tipo === "analisis_ia")
@@ -209,17 +213,26 @@ setImagenesCombinadas({ derecho, izquierdo });
               className={`px-6 py-2 mx-1 my-1 rounded-full font-medium transition-all
                 ${tab === item ? "bg-blue-600 text-white shadow" : "bg-white border border-gray-300 text-gray-600 hover:bg-gray-100"}`}
             >
-              {item === "analisisIA"
-                ? "🤖 Análisis IA"
-                : item === "anotaciones"
-                ? "📝 Anotaciones"
-                : item === "perfil"
-                ? "👤 Perfil"
-                : item === "imagenes"
-                ? "🖼️ Imágenes"
-                : item === "visitas"
-                ? "📋 Visitas"
-                : item.charAt(0).toUpperCase() + item.slice(1)}
+              <span className="inline-flex items-center gap-2">
+                {item === "analisisIA" && <CpuChipIcon className="h-5 w-5" />}
+                {item === "anotaciones" && <PencilSquareIcon className="h-5 w-5" />}
+                {item === "perfil" && <UserIcon className="h-5 w-5" />}
+                {item === "imagenes" && <PhotoIcon className="h-5 w-5" />}
+                {item === "visitas" && <ClipboardDocumentListIcon className="h-5 w-5" />}
+                <span>
+                  {item === "analisisIA"
+                    ? "Análisis IA"
+                    : item === "anotaciones"
+                    ? "Anotaciones"
+                    : item === "perfil"
+                    ? "Perfil"
+                    : item === "imagenes"
+                    ? "Imágenes"
+                    : item === "visitas"
+                    ? "Visitas"
+                    : item.charAt(0).toUpperCase() + item.slice(1)}
+                </span>
+              </span>
             </button>
           ))}
         </div>
