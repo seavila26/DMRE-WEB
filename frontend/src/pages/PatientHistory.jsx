@@ -9,7 +9,7 @@ import PatientProfile from "../components/PatientProfile";
 import EyeImagesGallery from "../components/EyeImagesGallery";
 import VisitList from "../components/VisitList";
 import NuevaVisita from "../components/NuevaVisita";
-import AnalisisIA from "../components/AnalisisIA";
+import ModeloIA from "../components/ModeloIA";
 import AnotacionesMedicas from "../components/AnotacionesMedicas";
 import { exportarPacienteExcel, exportarPacienteTXT } from "../utils/exportUtils";
 
@@ -247,12 +247,11 @@ setImagenesCombinadas({ derecho, izquierdo });
           )}
 
           {tab === "analisisIA" && (
-          <AnalisisIA
+          <ModeloIA
           imagenes={[
           ...imagenesCombinadas.derecho,
           ...imagenesCombinadas.izquierdo
           ]}
-          pacienteNombre={paciente?.nombre}
           />
           )}
 
