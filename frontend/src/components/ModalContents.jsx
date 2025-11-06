@@ -54,7 +54,7 @@ export function AboutDMREContent() {
       <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
         <h4 className="font-semibold text-yellow-900 mb-2">Factores de Riesgo</h4>
         <div className="grid md:grid-cols-2 gap-2 text-sm text-gray-700">
-          <div>✓ Edad avanzada (>50 años)</div>
+          <div>✓ Edad avanzada (&gt;50 años)</div>
           <div>✓ Tabaquismo</div>
           <div>✓ Historial familiar</div>
           <div>✓ Hipertensión arterial</div>
