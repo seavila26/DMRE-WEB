@@ -1,3 +1,15 @@
+# 🚨 SOLUCIÓN RÁPIDA - Error de Configuración en Hugging Face
+
+## El Problema
+Hugging Face requiere que el archivo se llame **exactamente** `README.md` (no `README_SPACES.md`) y tenga el header YAML correcto al inicio.
+
+---
+
+## ✅ SOLUCIÓN: Copiar y pegar esto en tu Space
+
+Cuando crees el archivo en Hugging Face, debe llamarse **`README.md`** y tener este contenido exacto:
+
+```markdown
 ---
 title: DMRE IA Backend
 emoji: 👁️
@@ -92,3 +104,69 @@ Este backend está diseñado para ser consumido por la aplicación web DMRE, que
 ## 📝 Licencia
 
 MIT License - Universidad De La Salle
+```
+
+---
+
+## 📝 Pasos Corregidos:
+
+### **1. En Hugging Face Space:**
+
+1. **Elimina** el README.md si ya existe (si lo subiste mal)
+2. Clic en **"+ Add file"** → **"Create a new file"**
+3. Nombre del archivo: **`README.md`** (exactamente así)
+4. **Copia y pega** todo el contenido de arriba (incluyendo el header YAML)
+5. Clic en **"Commit new file to main"**
+
+### **2. Luego sube estos archivos:**
+
+**Archivo 1: Dockerfile**
+```dockerfile
+# Copiar contenido de backend/Dockerfile
+```
+
+**Archivo 2: ia_server.py**
+```python
+# Copiar contenido de backend/ia_server.py
+```
+
+**Archivo 3: requirements.txt**
+```
+# Copiar contenido de backend/requirements.txt
+```
+
+---
+
+## ⚠️ IMPORTANTE
+
+El header YAML (las líneas entre `---`) debe estar **al inicio del archivo** sin ningún espacio o línea antes.
+
+Debe verse exactamente así:
+```
+---
+title: DMRE IA Backend
+emoji: 👁️
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 7860
+pinned: false
+---
+```
+
+Sin espacios antes de los `---` y cada campo en una línea separada.
+
+---
+
+## 🎯 Orden de creación de archivos:
+
+1. ✅ **README.md** (con el header YAML correcto)
+2. ✅ **Dockerfile**
+3. ✅ **ia_server.py**
+4. ✅ **requirements.txt**
+
+Una vez que tengas los 4 archivos, Hugging Face iniciará el build automáticamente.
+
+---
+
+¿Necesitas que te copie el contenido de algún archivo específico para que lo pegues directamente?
