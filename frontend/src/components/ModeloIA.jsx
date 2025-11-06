@@ -272,7 +272,7 @@ export default function ModeloIA({ imagenes }) {
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {imagenes
-                ?.filter(img => img.tipo === "original" || !img.tipo)
+                ?.filter(img => img.tipo === "original" || img.tipo === "paciente" || !img.tipo)
                 .map((img) => (
                   <div key={img.id} className="cursor-pointer group relative">
                     <img
@@ -295,7 +295,7 @@ export default function ModeloIA({ imagenes }) {
                 ))}
             </div>
 
-            {(!imagenes || imagenes.filter(img => img.tipo === "original" || !img.tipo).length === 0) && (
+            {(!imagenes || imagenes.filter(img => img.tipo === "original" || img.tipo === "paciente" || !img.tipo).length === 0) && (
               <div className="text-center py-8">
                 <p className="text-gray-500 text-sm">
                   📭 No hay imágenes disponibles en el historial del paciente.
