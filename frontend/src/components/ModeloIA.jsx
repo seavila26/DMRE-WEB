@@ -79,7 +79,7 @@ export default function ModeloIA({ imagenes }) {
     formData.append("imagen", file);
 
     try {
-      const res = await fetch("http://192.168.40.45:5001/segmentar", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/segmentar`, {
         method: "POST",
         body: formData,
       });
@@ -108,7 +108,7 @@ export default function ModeloIA({ imagenes }) {
       setImagenSeleccionadaInfo(imagenInfo);
 
       // Enviar la URL al servidor para que él descargue y procese la imagen
-      const res = await fetch("http://192.168.40.45:5001/segmentar-url", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/segmentar-url`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
