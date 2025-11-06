@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, addDoc, collection, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { saveIAAnalysisResult } from "../utils/imageUtils";
 
@@ -140,25 +140,63 @@ export default function ModeloIA({ imagenes }) {
       return;
     }
 
-    // Validar que la imagen tenga los campos necesarios
-    if (!imagenOriginalInfo.patientId || !imagenOriginalInfo.visitId) {
-      console.error("❌ La imagen no tiene patientId o visitId:", imagenOriginalInfo);
-      alert("⚠️ Esta imagen no puede guardarse automáticamente porque no está vinculada a una visita. Use imágenes del historial del paciente.");
+    // Validar que la imagen tenga patientId
+    if (!imagenOriginalInfo.patientId) {
+      console.error("❌ La imagen no tiene patientId:", imagenOriginalInfo);
+      alert("⚠️ Esta imagen no tiene información del paciente.");
       return;
     }
 
     try {
       setGuardandoAnalisis(true);
+      let visitId = imagenOriginalInfo.visitId;
+
+      // Si no tiene visitId, crear una visita inicial automáticamente
+      if (!visitId) {
+        console.log("🆕 Imagen sin visita detectada. Creando visita inicial automática...");
+
+        const nuevaVisita = {
+          fecha: new Date().toISOString(),
+          observacionClinica: "Visita inicial creada automáticamente al realizar análisis de IA",
+          estadioEnfermedad: "Por evaluar",
+          diagnostico: "",
+          createdBy: autorInfo.uid,
+          createdByName: autorInfo.nombre,
+          createdAt: new Date().toISOString(),
+          tipo: "inicial_ia"
+        };
+
+        const visitaRef = await addDoc(
+          collection(db, "pacientes", imagenOriginalInfo.patientId, "visitas"),
+          nuevaVisita
+        );
+        visitId = visitaRef.id;
+
+        console.log("✅ Visita inicial creada:", visitId);
+
+        // Actualizar la imagen para vincularla a la nueva visita
+        const imagenRef = doc(
+          db,
+          "pacientes",
+          imagenOriginalInfo.patientId,
+          "imagenes",
+          imagenOriginalInfo.id
+        );
+        await updateDoc(imagenRef, { visitId: visitId });
+
+        console.log("✅ Imagen vinculada a la visita inicial");
+      }
+
       console.log("💾 Guardando análisis IA...", {
         patientId: imagenOriginalInfo.patientId,
-        visitId: imagenOriginalInfo.visitId,
+        visitId: visitId,
         imagenId: imagenOriginalInfo.id
       });
 
       await saveIAAnalysisResult({
         imageBlob,
         patientId: imagenOriginalInfo.patientId,
-        visitId: imagenOriginalInfo.visitId,
+        visitId: visitId,
         imagenOriginalId: imagenOriginalInfo.id,
         ojo: imagenOriginalInfo.ojo,
         diagnostico: imagenOriginalInfo.diagnostico || "",
@@ -175,7 +213,8 @@ export default function ModeloIA({ imagenes }) {
       });
 
       console.log("✅ Análisis IA guardado correctamente en Firestore");
-      alert("✅ Análisis guardado exitosamente en el historial médico");
+      alert("✅ Análisis guardado exitosamente en el historial médico" +
+            (!imagenOriginalInfo.visitId ? "\n\n📝 Se creó automáticamente una visita inicial." : ""));
 
       // Recargar la página para mostrar el nuevo análisis en "Resultados anteriores"
       window.location.reload();
