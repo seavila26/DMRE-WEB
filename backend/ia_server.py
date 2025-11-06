@@ -106,5 +106,6 @@ def segmentar_url():
 
 if __name__ == "__main__":
     import os
-    port = int(os.environ.get("PORT", 5001))
+    # Puerto 7860 para Hugging Face Spaces, 5001 para desarrollo local
+    port = int(os.environ.get("PORT", 7860))
     app.run(host="0.0.0.0", port=port)

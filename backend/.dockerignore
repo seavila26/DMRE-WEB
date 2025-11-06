@@ -1,0 +1,33 @@
+# No incluir estos archivos en el Docker build
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info
+dist
+build
+.env
+.venv
+venv/
+ENV/
+
+# Archivos de documentación no necesarios en producción
+README.md
+DEPLOY_RENDER.md
+DEPLOY_HUGGINGFACE.md
+render.yaml
+start.sh
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
