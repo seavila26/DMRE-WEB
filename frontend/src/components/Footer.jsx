@@ -1,12 +1,13 @@
 // src/components/Footer.jsx
 import { Link } from "react-router-dom";
 import { Facebook, Twitter, Instagram } from "lucide-react";
+import { ShieldCheckIcon } from "@heroicons/react/24/outline";
 
 export default function Footer() {
   return (
     <footer className="bg-linear-to-r/hsl from-sky-600 to-sky-900 text-white py-12">
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
-        
+
         {/* Columna 1: Logo */}
         <div className="flex flex-col items-center md:items-start space-y-4">
           <img
@@ -43,9 +44,10 @@ export default function Footer() {
             {/* Acceso médico discreto */}
             <Link
               to="/login"
-              className="text-gray-300 hover:text-yellow-400 transition"
+              className="flex items-center gap-1.5 text-gray-300 hover:text-yellow-400 transition"
             >
-              👨‍⚕️ Acceso Médicos
+              <ShieldCheckIcon className="h-4 w-4" />
+              <span>Acceso Médicos</span>
             </Link>
           </nav>
 

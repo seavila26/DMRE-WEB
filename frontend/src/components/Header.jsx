@@ -1,5 +1,11 @@
 // src/components/Header.jsx
 import { Link } from "react-router-dom";
+import {
+  DocumentTextIcon,
+  AcademicCapIcon,
+  ChartBarIcon,
+  ShieldCheckIcon
+} from "@heroicons/react/24/outline";
 
 export default function Header() {
   return (
@@ -24,28 +30,32 @@ export default function Header() {
             <div className="absolute right-0 mt-2 w-56 bg-white text-gray-800 shadow-lg rounded-lg opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transform transition-all duration-200">
               <a
                 href="#publications"
-                className="block px-4 py-2 hover:bg-gray-100"
+                className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 transition-colors"
               >
-                📄 Publicaciones
+                <DocumentTextIcon className="h-5 w-5 text-gray-600" />
+                <span>Publicaciones</span>
               </a>
               <a
                 href="#research"
-                className="block px-4 py-2 hover:bg-gray-100"
+                className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 transition-colors"
               >
-                🎓 Investigación
+                <AcademicCapIcon className="h-5 w-5 text-gray-600" />
+                <span>Investigación</span>
               </a>
               <a
                 href="#stats"
-                className="block px-4 py-2 hover:bg-gray-100"
+                className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 transition-colors"
               >
-                📊 Estadísticas
+                <ChartBarIcon className="h-5 w-5 text-gray-600" />
+                <span>Estadísticas</span>
               </a>
               {/* Acceso Médicos más oculto */}
               <Link
                 to="/login"
-                className="block px-4 py-2 text-blue-700 font-semibold hover:bg-gray-100 rounded-b-lg"
+                className="flex items-center gap-2 px-4 py-2 text-blue-700 font-semibold hover:bg-gray-100 rounded-b-lg transition-colors"
               >
-                👨‍⚕️ Acceso 
+                <ShieldCheckIcon className="h-5 w-5 text-blue-700" />
+                <span>Acceso Médicos</span>
               </Link>
             </div>
           </div>
