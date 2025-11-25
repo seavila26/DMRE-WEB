@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { auth, db } from "../firebase";
+import { auth, db, secondaryAuth } from "../firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { setDoc, doc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
@@ -38,8 +38,9 @@ export default function NuevoUsuarioWizard() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Usar secondaryAuth para crear el usuario sin afectar la sesión del admin
       const userCredential = await createUserWithEmailAndPassword(
-        auth,
+        secondaryAuth,
         form.correo,
         form.password
       );
