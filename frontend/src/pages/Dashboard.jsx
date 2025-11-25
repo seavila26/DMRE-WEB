@@ -5,7 +5,7 @@ import { collection, getDocs, query, where, collectionGroup } from "firebase/fir
 import { logoutMedico } from "../auth";
 import { useAuth } from "../context/AuthContext";
 import Sidebar from "../components/Sidebar";
-import {UserGroupIcon, ClipboardDocumentListIcon, CpuChipIcon, ArrowDownTrayIcon} from "@heroicons/react/24/outline";
+import {UserGroupIcon, ClipboardDocumentListIcon, CpuChipIcon, ArrowDownTrayIcon, UserIcon, IdentificationIcon} from "@heroicons/react/24/outline";
 import { exportarTodosPacientesExcel } from "../utils/exportUtils";
 
 export default function Dashboard() {
@@ -190,10 +190,12 @@ export default function Dashboard() {
                         </div>
                         <div className="flex flex-wrap gap-2 items-center text-xs">
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full font-medium">
-                            👤 {p.edad} años
+                            <UserIcon className="h-3.5 w-3.5" />
+                            {p.edad} años
                           </span>
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full font-medium">
-                            📋 {p.identificacion || "N/A"}
+                            <IdentificationIcon className="h-3.5 w-3.5" />
+                            {p.identificacion || "N/A"}
                           </span>
                           {p.fechaRegistro && (
                             <span className="text-gray-500">

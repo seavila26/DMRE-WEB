@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { saveIAAnalysisResult } from "../utils/imageUtils";
+import { CalendarIcon, DocumentTextIcon, BuildingOffice2Icon } from "@heroicons/react/24/outline";
 
 export default function VisitList({ visitas, imagenes }) {
   const { user } = useAuth();
@@ -122,7 +123,7 @@ export default function VisitList({ visitas, imagenes }) {
       setImagenSegmentada(null);
 
       // Enviar la URL al servidor para que él descargue y procese la imagen
-      const res = await fetch("http://192.168.40.45:5001/segmentar-url", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/segmentar-url`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -221,9 +222,9 @@ export default function VisitList({ visitas, imagenes }) {
       <ul className="mb-6 space-y-4">
         {visitas.map((v) => (
           <li key={v.id} className="p-4 bg-white rounded shadow">
-            <p><strong>📅 Fecha:</strong> {new Date(v.fecha).toLocaleString()}</p>
-            <p><strong>📝 Observación Clínica:</strong> {v.observacionClinica || v.diagnostico || "N/A"}</p>
-            <p><strong>🏥 Estadio de la Enfermedad:</strong> <span className={`font-semibold ${
+            <p className="flex items-center gap-2"><CalendarIcon className="h-4 w-4 text-gray-600" /><strong>Fecha:</strong> {new Date(v.fecha).toLocaleString()}</p>
+            <p className="flex items-center gap-2"><DocumentTextIcon className="h-4 w-4 text-gray-600" /><strong>Observación Clínica:</strong> {v.observacionClinica || v.diagnostico || "N/A"}</p>
+            <p className="flex items-center gap-2"><BuildingOffice2Icon className="h-4 w-4 text-gray-600" /><strong>Estadio de la Enfermedad:</strong> <span className={`font-semibold ${
               v.estadioEnfermedad === "Normal" ? "text-green-600" :
               v.estadioEnfermedad === "Leve" ? "text-yellow-600" :
               v.estadioEnfermedad === "Moderada" ? "text-orange-600" :
