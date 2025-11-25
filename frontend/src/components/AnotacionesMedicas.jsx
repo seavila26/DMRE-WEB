@@ -2,6 +2,24 @@ import { useState, useEffect } from "react";
 import { collection, addDoc, getDocs, updateDoc, doc, query, orderBy } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
+import {
+  DocumentTextIcon,
+  ClipboardDocumentListIcon,
+  ChartBarIcon,
+  PlusIcon,
+  ClockIcon,
+  PencilSquareIcon,
+  PhotoIcon,
+  EyeIcon,
+  CalendarIcon,
+  UserIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  ShieldExclamationIcon,
+  ArrowTrendingUpIcon,
+  ArrowTrendingDownIcon,
+  ArrowRightIcon
+} from "@heroicons/react/24/outline";
 
 export default function AnotacionesMedicas({ pacienteId, visitaId, analisisId }) {
   const { user } = useAuth();
@@ -215,7 +233,8 @@ export default function AnotacionesMedicas({ pacienteId, visitaId, analisisId })
       {/* Header con botón para agregar */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-          📝 Anotaciones Clínicas
+          <DocumentTextIcon className="h-7 w-7 text-blue-600" />
+          Anotaciones Clínicas
         </h3>
         <div className="flex items-center gap-3">
           {/* Toggle de vista */}
@@ -223,23 +242,25 @@ export default function AnotacionesMedicas({ pacienteId, visitaId, analisisId })
             <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
               <button
                 onClick={() => setVistaTimeline(false)}
-                className={`px-4 py-2 rounded-lg font-medium transition ${
+                className={`px-4 py-2 rounded-lg font-medium transition flex items-center gap-2 ${
                   !vistaTimeline
                     ? "bg-white text-blue-600 shadow"
                     : "text-gray-600 hover:text-gray-800"
                 }`}
               >
-                📋 Lista
+                <ClipboardDocumentListIcon className="h-5 w-5" />
+                Lista
               </button>
               <button
                 onClick={() => setVistaTimeline(true)}
-                className={`px-4 py-2 rounded-lg font-medium transition ${
+                className={`px-4 py-2 rounded-lg font-medium transition flex items-center gap-2 ${
                   vistaTimeline
                     ? "bg-white text-blue-600 shadow"
                     : "text-gray-600 hover:text-gray-800"
                 }`}
               >
-                📈 Línea de Tiempo
+                <ChartBarIcon className="h-5 w-5" />
+                Línea de Tiempo
               </button>
             </div>
           )}
@@ -259,7 +280,7 @@ export default function AnotacionesMedicas({ pacienteId, visitaId, analisisId })
               }}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md hover:scale-105"
             >
-              <span>➕</span>
+              <PlusIcon className="h-5 w-5" />
               <span>Nueva Anotación</span>
             </button>
           )}
@@ -701,7 +722,9 @@ export default function AnotacionesMedicas({ pacienteId, visitaId, analisisId })
         </>
       ) : (
         <div className="bg-white rounded-xl shadow-md p-12 text-center">
-          <div className="text-8xl mb-4 opacity-50">📝</div>
+          <div className="flex justify-center mb-4 opacity-50">
+            <DocumentTextIcon className="h-24 w-24 text-gray-400" />
+          </div>
           <h4 className="text-xl font-bold text-gray-700 mb-2">No hay anotaciones clínicas aún</h4>
           <p className="text-gray-600 mb-6">
             Agrega la primera anotación clínica para comenzar el seguimiento del paciente

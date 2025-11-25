@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { db } from "../firebase";
 import { doc, getDoc, collection, getDocs, collectionGroup, query, where, orderBy } from "firebase/firestore";
-import { ArrowDownTrayIcon, UserIcon, IdentificationIcon, ChartBarIcon, PencilSquareIcon, PhotoIcon, ClipboardDocumentListIcon, CpuChipIcon } from "@heroicons/react/24/outline";
+import { ArrowDownTrayIcon, UserIcon, IdentificationIcon, ChartBarIcon, PencilSquareIcon, PhotoIcon, ClipboardDocumentListIcon, CpuChipIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
 
 import PatientProfile from "../components/PatientProfile";
 import EyeImagesGallery from "../components/EyeImagesGallery";
@@ -288,7 +288,9 @@ setImagenesCombinadas({ derecho, izquierdo });
                 />
               ) : (
                 <div className="text-center py-12">
-                  <div className="text-6xl mb-4 opacity-50">📝</div>
+                  <div className="flex justify-center mb-4 opacity-50">
+                    <DocumentTextIcon className="h-24 w-24 text-gray-400" />
+                  </div>
                   <h3 className="text-xl font-bold text-gray-700 mb-2">
                     No hay visitas registradas
                   </h3>

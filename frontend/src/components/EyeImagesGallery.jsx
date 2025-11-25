@@ -1,5 +1,6 @@
 // EyeImagesGallery.jsx
 import { useState, useEffect } from "react";
+import { PhotoIcon } from "@heroicons/react/24/outline";
 
 export default function EyeImagesGallery({ imagenes }) {
   const [selectedImg, setSelectedImg] = useState(null);
@@ -37,7 +38,10 @@ export default function EyeImagesGallery({ imagenes }) {
     <div className="mt-6">
       {/* Encabezado */}
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold text-gray-800">📸 Galería</h2>
+        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <PhotoIcon className="h-7 w-7 text-blue-600" />
+          Galería
+        </h2>
         <div className="flex items-center gap-3">
           <button
             onClick={openCompare}

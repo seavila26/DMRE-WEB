@@ -1,5 +1,20 @@
 import { useState, useRef } from "react";
 import { exportarAnalisisComparativoPDFCaptura } from "../utils/exportUtils";
+import {
+  CpuChipIcon,
+  ChartBarIcon,
+  MagnifyingGlassIcon,
+  EyeIcon,
+  ClipboardDocumentListIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  UserIcon,
+  CalendarIcon,
+  PhotoIcon,
+  ArrowDownTrayIcon,
+  InformationCircleIcon,
+  CheckIcon
+} from "@heroicons/react/24/outline";
 
 export default function AnalisisIA({ imagenes, pacienteNombre }) {
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -125,7 +140,8 @@ export default function AnalisisIA({ imagenes, pacienteNombre }) {
         {/* Título principal */}
         <div className="text-center">
           <h2 className="text-4xl font-bold text-gray-800 flex items-center justify-center gap-3">
-            🧠 Historial de Análisis IA
+            <CpuChipIcon className="h-10 w-10 text-blue-600" />
+            Historial de Análisis IA
           </h2>
           <p className="text-gray-600 mt-2">Segmentación de Fondo de Ojo con Inteligencia Artificial</p>
         </div>
@@ -135,7 +151,7 @@ export default function AnalisisIA({ imagenes, pacienteNombre }) {
         {/* ========================================= */}
         <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-8 border-2 border-blue-200">
           <h3 className="text-2xl font-bold text-blue-800 mb-6 flex items-center gap-2">
-            <span className="text-3xl">📊</span>
+            <ChartBarIcon className="h-8 w-8" />
             Resumen del Paciente
           </h3>
 
@@ -159,7 +175,10 @@ export default function AnalisisIA({ imagenes, pacienteNombre }) {
           </div>
 
           <div className="bg-white p-6 rounded-xl shadow-md">
-            <h4 className="font-semibold text-gray-800 mb-3">🩺 Información Adicional</h4>
+            <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+              <InformationCircleIcon className="h-5 w-5 text-blue-600" />
+              Información Adicional
+            </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
               <div>
                 <p className="mb-2">
@@ -173,7 +192,10 @@ export default function AnalisisIA({ imagenes, pacienteNombre }) {
                 </p>
               </div>
               <div>
-                <p className="font-semibold mb-2">👨‍⚕️ Médicos que analizaron:</p>
+                <p className="font-semibold mb-2 flex items-center gap-2">
+                  <UserIcon className="h-5 w-5 text-blue-600" />
+                  Médicos que analizaron:
+                </p>
                 <ul className="space-y-1">
                   {medicos && Object.entries(medicos).map(([nombre, cantidad]) => (
                     <li key={nombre} className="text-gray-600">
@@ -194,7 +216,7 @@ export default function AnalisisIA({ imagenes, pacienteNombre }) {
         {/* ========================================= */}
         <div className="bg-white rounded-2xl p-6 border-2 border-gray-200">
           <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <span className="text-2xl">🔍</span>
+            <MagnifyingGlassIcon className="h-6 w-6 text-blue-600" />
             Filtros
           </h3>
           <div className="flex flex-wrap gap-4">
@@ -206,8 +228,8 @@ export default function AnalisisIA({ imagenes, pacienteNombre }) {
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="todos">Todos</option>
-                <option value="derecho">👁️ Ojo Derecho</option>
-                <option value="izquierdo">👁️ Ojo Izquierdo</option>
+                <option value="derecho">Ojo Derecho</option>
+                <option value="izquierdo">Ojo Izquierdo</option>
               </select>
             </div>
             <div>
