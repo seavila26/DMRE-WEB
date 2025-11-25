@@ -117,19 +117,20 @@ export default function NuevoPaciente() {
             <h2 className="text-xl font-semibold text-gray-700 mb-4">Datos Personales</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-gray-600 mb-1">Nombre completo</label>
+                <label className="block text-gray-600 mb-1 font-medium">Nombre completo</label>
                 <input type="text" name="nombre" required value={formData.nombre} onChange={handleChange}
-                  className="w-full border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-400" />
+                  className="w-full border-2 border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-400 focus:border-blue-400" />
               </div>
               <div>
-                <label className="block text-gray-600 mb-1">Edad</label>
+                <label className="block text-gray-600 mb-1 font-medium">Edad</label>
                 <input type="number" name="edad" required value={formData.edad} onChange={handleChange}
-                  className="w-full border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-400" />
+                  min="0" max="120"
+                  className="w-full border-2 border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-400 focus:border-blue-400" />
               </div>
               <div>
-                <label className="block text-gray-600 mb-1">Género</label>
+                <label className="block text-gray-600 mb-1 font-medium">Género</label>
                 <select name="genero" required value={formData.genero} onChange={handleChange}
-                  className="w-full border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-400">
+                  className="w-full border-2 border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-400 focus:border-blue-400">
                   <option value="">Seleccione</option>
                   <option>Masculino</option>
                   <option>Femenino</option>
@@ -137,19 +138,27 @@ export default function NuevoPaciente() {
                 </select>
               </div>
               <div>
-                <label className="block text-gray-600 mb-1">N° Identificación</label>
+                <label className="block text-gray-600 mb-1 font-medium">N° Identificación (solo números)</label>
                 <input type="text" name="identificacion" required value={formData.identificacion} onChange={handleChange}
-                  className="w-full border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-400" />
+                  onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')}
+                  className="w-full border-2 border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-400 focus:border-blue-400" />
               </div>
               <div>
-                <label className="block text-gray-600 mb-1">Dirección</label>
+                <label className="block text-gray-600 mb-1 font-medium">Dirección</label>
                 <input type="text" name="direccion" value={formData.direccion} onChange={handleChange}
-                  className="w-full border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-400" />
+                  className="w-full border-2 border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-400 focus:border-blue-400" />
               </div>
               <div>
-                <label className="block text-gray-600 mb-1">Teléfono</label>
-                <input type="text" name="telefono" value={formData.telefono} onChange={handleChange}
-                  className="w-full border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-400" />
+                <label className="block text-gray-600 mb-1 font-medium">Teléfono (10 dígitos)</label>
+                <input type="tel" name="telefono" value={formData.telefono} onChange={handleChange}
+                  maxLength="10"
+                  pattern="[0-9]{10}"
+                  onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')}
+                  placeholder="Ej. 3121234567"
+                  className="w-full border-2 border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-400 focus:border-blue-400" />
+                {formData.telefono && formData.telefono.length > 0 && formData.telefono.length !== 10 && (
+                  <p className="text-xs text-red-500 mt-1">Debe tener exactamente 10 dígitos</p>
+                )}
               </div>
             </div>
           </section>
@@ -160,10 +169,10 @@ export default function NuevoPaciente() {
             <div className="space-y-4">
               {["antecedentes","diagnostico","notas"].map(field => (
                 <div key={field}>
-                  <label className="block text-gray-600 mb-1 capitalize">{field}</label>
+                  <label className="block text-gray-600 mb-1 font-medium capitalize">{field}</label>
                   <textarea name={field} rows={field==="notas"?2:3}
                     value={formData[field]} onChange={handleChange}
-                    className="w-full border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-400" />
+                    className="w-full border-2 border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-400 focus:border-blue-400" />
                 </div>
               ))}
             </div>

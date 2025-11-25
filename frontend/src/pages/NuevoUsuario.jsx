@@ -118,7 +118,7 @@ export default function NuevoUsuarioWizard() {
               </div>
 
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Teléfono
+                Teléfono (10 dígitos)
               </label>
               <div className="relative mb-4">
                 <input
@@ -126,13 +126,19 @@ export default function NuevoUsuarioWizard() {
                   name="telefono"
                   value={form.telefono}
                   onChange={handleChange}
-                  placeholder="Ej. +52 123 456 7890"
+                  placeholder="Ej. 3121234567"
+                  maxLength="10"
+                  pattern="[0-9]{10}"
+                  onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')}
                   className="border p-2 w-full rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
+                {form.telefono && form.telefono.length !== 10 && (
+                  <p className="text-xs text-red-500 mt-1">Debe tener exactamente 10 dígitos</p>
+                )}
               </div>
 
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Cédula Profesional
+                Cédula Profesional (solo números)
               </label>
               <div className="relative mb-4">
                 <input
@@ -141,6 +147,7 @@ export default function NuevoUsuarioWizard() {
                   value={form.cedulaProfesional}
                   onChange={handleChange}
                   placeholder="Ej. 12345678"
+                  onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')}
                   className="border p-2 w-full rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
               </div>
